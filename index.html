@@ -1,0 +1,3169 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>GuitarTuna Pro — Гитарный Тюнер (Акустика, Классика, Электро)</title>
+  <style>
+    :root {
+      --bg-primary: #0b0e14;
+      --bg-secondary: #121722;
+      --bg-card: rgba(20, 26, 40, 0.92);
+      --border-subtle: rgba(255, 255, 255, 0.09);
+      --border-highlight: rgba(255, 255, 255, 0.18);
+      --text-main: #f3f6fc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --accent-green: #10e878;
+      --accent-green-glow: rgba(16, 232, 120, 0.35);
+      --accent-amber: #ffb020;
+      --accent-red: #ff4757;
+      --accent-blue: #38bdf8;
+      --theme-color: #f59e0b;
+      --theme-glow: rgba(245, 158, 11, 0.22);
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+    }
+
+    [data-guitar="acoustic"] {
+      --theme-color: #f59e0b;
+      --theme-glow: rgba(245, 158, 11, 0.22);
+    }
+    [data-guitar="classical"] {
+      --theme-color: #ec4899;
+      --theme-glow: rgba(236, 72, 153, 0.22);
+    }
+    [data-guitar="electric"] {
+      --theme-color: #06b6d4;
+      --theme-glow: rgba(6, 182, 212, 0.22);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      font-variant-numeric: tabular-nums;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 0%, var(--theme-glow), transparent 55%),
+                  linear-gradient(180deg, #090c12 0%, #0d121c 50%, #090c12 100%);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Header Bar */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      background: rgba(11, 14, 20, 0.9);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent-green), #059669);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 18px var(--accent-green-glow);
+      font-weight: 800;
+      font-size: 20px;
+      color: #06130c;
+    }
+
+    .brand-title {
+      font-size: 1.12rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 99px;
+      background: rgba(16, 232, 120, 0.14);
+      color: var(--accent-green);
+      border: 1px solid rgba(16, 232, 120, 0.3);
+    }
+
+    .brand-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Guitar Type Selector Tabs */
+    .guitar-tabs {
+      display: flex;
+      background: rgba(18, 23, 34, 0.95);
+      padding: 4px;
+      border-radius: 14px;
+      border: 1px solid var(--border-subtle);
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .guitar-tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease;
+      font-family: inherit;
+    }
+
+    .guitar-tab:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .guitar-tab.active {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.05));
+      color: var(--text-main);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35), inset 0 0 0 1.5px var(--theme-color);
+    }
+
+    .guitar-tab .tab-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-dim);
+    }
+
+    .guitar-tab.active .tab-dot {
+      background: var(--theme-color);
+      box-shadow: 0 0 8px var(--theme-color);
+    }
+
+    /* Header Right Controls */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .mic-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 215px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid rgba(16, 232, 120, 0.4);
+      background: linear-gradient(135deg, #10e878 0%, #059669 100%);
+      color: #04120a;
+      font-weight: 800;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: background 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 4px 16px rgba(16, 232, 120, 0.28);
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .mic-btn.listening {
+      background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #fff;
+      box-shadow: 0 4px 18px rgba(239, 68, 68, 0.35);
+    }
+
+    /* Main Layout */
+    .main-container {
+      max-width: 1300px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 16px 20px 32px;
+      display: grid;
+      grid-template-columns: 335px minmax(0, 1fr) 330px;
+      gap: 18px;
+      flex: 1;
+      align-items: start;
+    }
+
+    @media (max-width: 1120px) {
+      .main-container {
+        grid-template-columns: 1fr 1fr;
+      }
+      .center-stage {
+        grid-column: 1 / -1;
+        order: -1;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .main-container {
+        grid-template-columns: 1fr;
+        padding: 10px;
+      }
+      .app-header {
+        padding: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .guitar-tabs {
+        width: 100%;
+        justify-content: center;
+      }
+      .guitar-tab {
+        flex: 1;
+        justify-content: center;
+        padding: 8px 6px;
+        font-size: 0.78rem;
+      }
+    }
+
+    /* Panel Cards */
+    .panel-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 10px;
+    }
+
+    .panel-title {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 18px;
+      white-space: nowrap;
+    }
+
+    .select-box {
+      width: 100%;
+      padding: 9px 11px;
+      border-radius: var(--radius-sm);
+      background: rgba(11, 14, 20, 0.92);
+      border: 1px solid var(--border-highlight);
+      color: var(--text-main);
+      font-size: 0.84rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .select-box optgroup {
+      background: #121722;
+      color: var(--theme-color);
+      font-weight: 700;
+    }
+
+    .select-box option {
+      background: #161c2a;
+      color: var(--text-main);
+      padding: 6px;
+    }
+
+    .tuning-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .tuning-pill {
+      padding: 5px 9px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-muted);
+      font-size: 0.74rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .tuning-pill:hover {
+      background: rgba(255, 255, 255, 0.09);
+      color: var(--text-main);
+    }
+
+    .tuning-pill.active {
+      background: rgba(16, 232, 120, 0.16);
+      border-color: var(--accent-green);
+      color: var(--accent-green);
+    }
+
+    .tuning-description {
+      font-size: 0.75rem;
+      line-height: 1.4;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 9px 11px;
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--theme-color);
+      min-height: 62px;
+    }
+
+    /* Current Tuning Notes Strip */
+    .strings-overview {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 5px;
+    }
+
+    .string-mini-card {
+      background: rgba(11, 14, 20, 0.8);
+      border: 1.5px solid var(--border-subtle);
+      border-radius: 10px;
+      height: 58px;
+      padding: 6px 2px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .string-mini-card:hover {
+      border-color: var(--theme-color);
+    }
+
+    .string-mini-card.active {
+      border-color: var(--accent-green);
+      background: rgba(16, 232, 120, 0.14);
+    }
+
+    .string-mini-card.tuned::after {
+      content: '✓';
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      font-size: 0.62rem;
+      color: var(--accent-green);
+      font-weight: 900;
+    }
+
+    .string-mini-num {
+      font-size: 0.63rem;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    .string-mini-note {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin: 1px 0;
+      font-family: var(--font-mono);
+    }
+
+    .string-mini-freq {
+      font-size: 0.58rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .custom-editor {
+      display: none;
+      flex-direction: column;
+      gap: 7px;
+      background: rgba(11, 14, 20, 0.65);
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      border: 1px dashed var(--border-highlight);
+    }
+
+    .custom-editor.visible {
+      display: flex;
+    }
+
+    .custom-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.78rem;
+    }
+
+    .semitone-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mini-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      border: 1px solid var(--border-highlight);
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text-main);
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .range-slider {
+      width: 100%;
+      accent-color: var(--theme-color);
+      cursor: pointer;
+    }
+
+    .toggle-group {
+      display: flex;
+      background: rgba(11, 14, 20, 0.85);
+      border-radius: 10px;
+      padding: 3px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 6px 10px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 7px;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .toggle-btn.active {
+      background: var(--theme-color);
+      color: #080b10;
+      font-weight: 700;
+    }
+
+    /* ================= CENTER STAGE: STRICT FIXED DIMENSIONS (ZERO SHAKE) ================= */
+    .center-stage {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .tuner-display-card {
+      background: linear-gradient(180deg, rgba(22, 29, 44, 0.96) 0%, rgba(12, 16, 26, 0.98) 100%);
+      border: 1px solid var(--border-highlight);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .tuner-top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 36px;
+      gap: 10px;
+      flex-wrap: nowrap;
+      overflow: hidden;
+    }
+
+    .mode-switch-wrap {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(11, 14, 20, 0.85);
+      padding: 0 12px;
+      height: 34px;
+      border-radius: 99px;
+      border: 1px solid var(--border-subtle);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .mode-label {
+      font-size: 0.74rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .mode-label.active {
+      color: var(--accent-green);
+    }
+
+    .switch {
+      position: relative;
+      width: 38px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.14);
+      border-radius: 99px;
+      flex-shrink: 0;
+    }
+
+    .switch.on {
+      background: var(--accent-green);
+    }
+
+    .switch-knob {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 0.2s;
+    }
+
+    .switch.on .switch-knob {
+      transform: translateX(18px);
+      background: #06130c;
+    }
+
+    .status-pill {
+      font-size: 0.78rem;
+      font-weight: 800;
+      padding: 0 14px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    .status-pill.in-tune {
+      background: rgba(16, 232, 120, 0.2);
+      color: var(--accent-green);
+      border-color: var(--accent-green);
+    }
+
+    .status-pill.flat, .status-pill.sharp {
+      background: rgba(255, 176, 32, 0.18);
+      color: var(--accent-amber);
+      border-color: rgba(255, 176, 32, 0.5);
+    }
+
+    .status-pill.way-off {
+      background: rgba(255, 71, 87, 0.18);
+      color: var(--accent-red);
+      border-color: rgba(255, 71, 87, 0.5);
+    }
+
+    /* STRICT FIXED-SIZE DUAL COMPARISON GRID: NEVER RESIZES */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 168px minmax(0, 1fr);
+      gap: 10px;
+      height: 92px;
+      align-items: stretch;
+    }
+
+    .pitch-box {
+      background: rgba(9, 12, 18, 0.9);
+      border: 1.5px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 9px 14px;
+      height: 92px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .pitch-box.current-active {
+      border-color: var(--accent-blue);
+    }
+
+    .pitch-box.current-intune {
+      border-color: var(--accent-green);
+    }
+
+    .pitch-box.target-box {
+      border-color: rgba(245, 158, 11, 0.45);
+      text-align: right;
+      align-items: flex-end;
+    }
+
+    .pitch-box-header {
+      font-size: 0.66rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+      height: 15px;
+      line-height: 15px;
+    }
+
+    .pitch-box-main {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      height: 36px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .pitch-big-note {
+      font-size: 1.9rem;
+      font-weight: 900;
+      font-family: var(--font-mono);
+      line-height: 36px;
+      color: var(--text-main);
+    }
+
+    .pitch-rus-note {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: var(--accent-blue);
+      white-space: nowrap;
+    }
+
+    .pitch-box.target-box .pitch-rus-note {
+      color: var(--theme-color);
+    }
+
+    .pitch-box-sub {
+      font-size: 0.76rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      font-weight: 600;
+      white-space: nowrap;
+      height: 16px;
+      line-height: 16px;
+    }
+
+    .comparison-center {
+      background: rgba(9, 12, 18, 0.92);
+      border: 1.5px solid var(--border-highlight);
+      border-radius: 14px;
+      padding: 8px 10px;
+      width: 168px;
+      height: 92px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .delta-cents-big {
+      font-size: 1.45rem;
+      font-weight: 900;
+      font-family: var(--font-mono);
+      height: 32px;
+      line-height: 32px;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    .delta-direction {
+      font-size: 0.72rem;
+      font-weight: 800;
+      height: 18px;
+      line-height: 18px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* GuitarTuna Canvas Meter */
+    .meter-wrapper {
+      position: relative;
+      width: 100%;
+      height: 175px;
+      background: rgba(7, 10, 15, 0.8);
+      border-radius: 14px;
+      border: 1px solid var(--border-subtle);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    #tunerCanvas {
+      width: 100%;
+      height: 175px;
+      display: block;
+    }
+
+    /* ================= INTERACTIVE HEADSTOCK STAGE ================= */
+    .headstock-card {
+      background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.04), transparent 70%),
+                  var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .headstock-toolbar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      min-height: 32px;
+      gap: 8px;
+    }
+
+    .headstock-type-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .headstock-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .small-action-btn {
+      padding: 6px 11px;
+      border-radius: 9px;
+      border: 1px solid var(--border-highlight);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .small-action-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--theme-color);
+    }
+
+    .small-action-btn.active {
+      background: rgba(16, 232, 120, 0.18);
+      border-color: var(--accent-green);
+      color: var(--accent-green);
+    }
+
+    .headstock-interactive-area {
+      width: 100%;
+      max-width: 540px;
+      display: grid;
+      grid-template-columns: 118px 1fr 118px;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      height: 340px;
+    }
+
+    .pegs-column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      z-index: 5;
+    }
+
+    .pegs-column.left {
+      align-items: flex-end;
+    }
+
+    .pegs-column.right {
+      align-items: flex-start;
+    }
+
+    .peg-button {
+      width: 112px;
+      height: 48px;
+      padding: 6px 10px;
+      border-radius: 14px;
+      border: 1.5px solid var(--border-highlight);
+      background: rgba(13, 18, 28, 0.92);
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+
+    .peg-button:hover {
+      border-color: var(--theme-color);
+      background: rgba(24, 32, 48, 0.96);
+    }
+
+    .peg-button.selected {
+      border-color: var(--accent-green);
+      background: linear-gradient(135deg, rgba(16, 232, 120, 0.24), rgba(16, 232, 120, 0.06));
+      box-shadow: 0 0 16px rgba(16, 232, 120, 0.28);
+    }
+
+    .peg-string-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .peg-button.selected .peg-string-num {
+      background: var(--accent-green);
+      color: #05140c;
+    }
+
+    .peg-button.tuned .peg-string-num {
+      background: rgba(16, 232, 120, 0.25);
+      color: var(--accent-green);
+      border: 1px solid var(--accent-green);
+    }
+
+    .peg-note-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      overflow: hidden;
+    }
+
+    .pegs-column.right .peg-note-info {
+      align-items: flex-start;
+    }
+
+    .peg-note-title {
+      font-size: 0.98rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+
+    .peg-note-sub {
+      font-size: 0.64rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      white-space: nowrap;
+    }
+
+    .headstock-svg-container {
+      width: 100%;
+      height: 340px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #headstockSvg {
+      width: 260px;
+      height: 340px;
+      display: block;
+    }
+
+    /* Right Panel: Guitar-Only Filter Box, Level Meter, Spectrum, Simulator */
+    .filter-shield-box {
+      background: linear-gradient(135deg, rgba(16, 232, 120, 0.1), rgba(6, 182, 212, 0.06));
+      border: 1px solid rgba(16, 232, 120, 0.35);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .filter-shield-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--accent-green);
+    }
+
+    .filter-status-line {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      height: 16px;
+      line-height: 16px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .level-bar-bg {
+      width: 100%;
+      height: 10px;
+      background: #080b10;
+      border-radius: 99px;
+      border: 1px solid var(--border-subtle);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .level-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #475569;
+      transition: width 0.06s linear;
+    }
+
+    .level-bar-fill.guitar-verified {
+      background: linear-gradient(90deg, #10e878, #059669);
+    }
+
+    .spectrum-canvas-wrap {
+      width: 100%;
+      height: 82px;
+      background: #080b10;
+      border-radius: 10px;
+      border: 1px solid var(--border-subtle);
+      overflow: hidden;
+    }
+
+    #spectrumCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .sim-box {
+      background: rgba(11, 14, 20, 0.82);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sim-badge {
+      font-size: 0.68rem;
+      padding: 2px 8px;
+      border-radius: 99px;
+      background: rgba(56, 189, 248, 0.16);
+      color: #38bdf8;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body data-guitar="acoustic">
+
+  <!-- ================= HEADER ================= -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-logo">♪</div>
+      <div>
+        <div class="brand-title">
+          GuitarTuna Studio
+          <span class="brand-badge">6 Струн</span>
+        </div>
+        <div class="brand-subtitle">Точный тюнер с защитой от речи и фонового шума</div>
+      </div>
+    </div>
+
+    <!-- Guitar Type Selector -->
+    <div class="guitar-tabs" role="tablist" aria-label="Выбор типа гитары">
+      <button class="guitar-tab active" data-type="acoustic" onclick="selectGuitarType('acoustic')">
+        <span class="tab-dot"></span>
+        <span>Акустика</span>
+      </button>
+      <button class="guitar-tab" data-type="classical" onclick="selectGuitarType('classical')">
+        <span class="tab-dot"></span>
+        <span>Классика</span>
+      </button>
+      <button class="guitar-tab" data-type="electric" onclick="selectGuitarType('electric')">
+        <span class="tab-dot"></span>
+        <span>Электрогитара</span>
+      </button>
+    </div>
+
+    <!-- Microphone Button -->
+    <div class="header-actions">
+      <button id="micToggleBtn" class="mic-btn" onclick="toggleMicrophone()">
+        <span id="micIcon">🎤</span>
+        <span id="micBtnText">Включить микрофон</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTENT ================= -->
+  <main class="main-container">
+
+    <!-- LEFT PANEL: TUNINGS & KEYS -->
+    <section class="panel-card">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>🎼</span> Тональность и строй
+        </div>
+        <span style="font-size:0.72rem;color:var(--text-muted);">20 строев</span>
+      </div>
+
+      <!-- Quick Popular Tuning Pills -->
+      <div class="form-group">
+        <div class="form-label">Популярные строи</div>
+        <div class="tuning-pills" id="quickTuningPills">
+          <button class="tuning-pill active" data-tuning="standard" onclick="selectTuning('standard')">Standard E</button>
+          <button class="tuning-pill" data-tuning="drop_d" onclick="selectTuning('drop_d')">Drop D</button>
+          <button class="tuning-pill" data-tuning="half_down" onclick="selectTuning('half_down')">Eb (-1/2)</button>
+          <button class="tuning-pill" data-tuning="full_down" onclick="selectTuning('full_down')">D Std (-1)</button>
+          <button class="tuning-pill" data-tuning="drop_c" onclick="selectTuning('drop_c')">Drop C</button>
+          <button class="tuning-pill" data-tuning="open_g" onclick="selectTuning('open_g')">Open G</button>
+          <button class="tuning-pill" data-tuning="open_d" onclick="selectTuning('open_d')">Open D</button>
+          <button class="tuning-pill" data-tuning="dadgad" onclick="selectTuning('dadgad')">DADGAD</button>
+        </div>
+      </div>
+
+      <!-- Full Tuning Dropdown -->
+      <div class="form-group">
+        <label class="form-label" for="tuningSelect">Все тональности и строи</label>
+        <select id="tuningSelect" class="select-box" onchange="selectTuning(this.value)">
+          <optgroup label="Стандартные и пониженные">
+            <option value="standard">Стандартный Ми — E Standard (E A D G B E)</option>
+            <option value="half_down">На полтона ниже — Eb Standard (D# G# C# F# A# D#)</option>
+            <option value="full_down">На тон ниже — D Standard (D G C F A D)</option>
+            <option value="csharp_std">На 1.5 тона ниже — C# Standard (C# F# B E G# C#)</option>
+            <option value="c_std">На 2 тона ниже — C Standard (C F A# D# G C)</option>
+            <option value="b_std">Баритон — B Standard (B E A D F# B)</option>
+          </optgroup>
+          <optgroup label="Drop-строи (Рок / Метал)">
+            <option value="drop_d">Drop D (D A D G B E)</option>
+            <option value="drop_csharp">Drop C# (C# G# C# F# A# D#)</option>
+            <option value="drop_c">Drop C (C G C F A D)</option>
+            <option value="drop_b">Drop B (B F# B E G# C#)</option>
+            <option value="drop_a">Drop A (A E A D F# B)</option>
+            <option value="double_drop_d">Double Drop D (D A D G B D)</option>
+          </optgroup>
+          <optgroup label="Открытые строи (Open / Слайд / Фингерстайл)">
+            <option value="open_d">Open D — Ре мажор (D A D F# A D)</option>
+            <option value="open_g">Open G — Соль мажор / Русский 6-стр. (D G D G B D)</option>
+            <option value="open_e">Open E — Ми мажор (E B E G# B E)</option>
+            <option value="open_a">Open A — Ля мажор (E A E A C# E)</option>
+            <option value="open_c">Open C — До мажор (C G C G C E)</option>
+            <option value="open_em">Open Em — Ми минор (E B E G B E)</option>
+          </optgroup>
+          <optgroup label="Альтернативные и модальные">
+            <option value="dadgad">DADGAD — Кельтский строй (D A D G A D)</option>
+            <option value="all_fourths">Все кварты — All Fourths (E A D G C F)</option>
+            <option value="nst">New Standard — Р. Фрипп (C G D A E G)</option>
+            <option value="custom">Свой строй (Настраиваемый по струнам)</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <!-- Description of Selected Tuning -->
+      <div id="tuningDescription" class="tuning-description">
+        Классический стандартный строй 6-струнной гитары (Ми-Ля-Ре-Соль-Си-Ми).
+      </div>
+
+      <!-- 6 Strings Overview Cards -->
+      <div class="form-group">
+        <div class="form-label">
+          <span>Целевые ноты строя (6 → 1)</span>
+          <span style="font-size:0.68rem;color:var(--accent-green);">Клик = звук</span>
+        </div>
+        <div class="strings-overview" id="stringsOverview"></div>
+      </div>
+
+      <!-- Custom String Editor -->
+      <div id="customEditor" class="custom-editor">
+        <div class="form-label" style="color:var(--theme-color);">Индивидуальная настройка струн</div>
+        <div id="customEditorRows"></div>
+      </div>
+
+      <!-- Capo / Transpose & Calibration -->
+      <div class="form-group" style="padding-top:4px;border-top:1px solid var(--border-subtle);">
+        <div class="form-label">
+          <span>Транспонирование / Каподастр</span>
+          <span id="transposeLabel" style="color:var(--theme-color);font-family:var(--font-mono);">0 пт (Без капо)</span>
+        </div>
+        <input id="transposeSlider" type="range" min="-5" max="7" step="1" value="0" class="range-slider" oninput="updateTranspose(this.value)" />
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">
+          <span>Эталон камертона A4 (Ля)</span>
+          <span id="a4Label" style="color:var(--accent-green);font-family:var(--font-mono);">440 Гц</span>
+        </div>
+        <input id="a4Slider" type="range" min="415" max="466" step="1" value="440" class="range-slider" oninput="updateA4(this.value)" />
+        <div style="display:flex;gap:5px;margin-top:2px;">
+          <button class="tuning-pill" onclick="updateA4(440)">440 Гц</button>
+          <button class="tuning-pill" onclick="updateA4(432)">432 Гц</button>
+          <button class="tuning-pill" onclick="updateA4(442)">442 Гц</button>
+        </div>
+      </div>
+
+      <!-- Notation Style -->
+      <div class="control-row">
+        <span class="form-label">Обозначение нот</span>
+        <div class="toggle-group" style="width:170px;">
+          <button id="notEngBtn" class="toggle-btn active" onclick="setNotation('en')">E A D G B E</button>
+          <button id="notRusBtn" class="toggle-btn" onclick="setNotation('ru')">Ми Ля Ре...</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CENTER STAGE: DUAL PITCH READOUT + GUITARTUNA METER + HEADSTOCK -->
+    <section class="center-stage">
+
+      <!-- Tuner Display Card -->
+      <div class="tuner-display-card">
+        <div class="tuner-top-bar">
+          <!-- Auto / Manual Mode Switch -->
+          <div class="mode-switch-wrap" onclick="toggleAutoMode()" title="АВТО — тюнер сам определяет струну. РУЧНОЙ — настройка только выбранной струны.">
+            <span id="manualModeLabel" class="mode-label">РУЧНОЙ</span>
+            <div id="autoSwitch" class="switch on">
+              <div class="switch-knob"></div>
+            </div>
+            <span id="autoModeLabel" class="mode-label active">АВТО</span>
+          </div>
+
+          <!-- Tuning Status Pill -->
+          <div id="tuningStatusPill" class="status-pill">
+            Включите микрофон и ударьте по струне
+          </div>
+        </div>
+
+        <!-- DUAL PITCH COMPARISON: CURRENT DETECTED NOTE vs TARGET STRING NOTE -->
+        <div class="comparison-grid">
+          <!-- Left Box: What the microphone hears RIGHT NOW -->
+          <div id="currentPitchBox" class="pitch-box">
+            <div class="pitch-box-header">🎙️ СЕЙЧАС ЗВУЧИТ (ВАША СТРУНА)</div>
+            <div class="pitch-box-main">
+              <span id="detectedNoteMain" class="pitch-big-note">—</span>
+              <span id="detectedNoteRus" class="pitch-rus-note">Ожидание</span>
+            </div>
+            <div id="detectedFreqText" class="pitch-box-sub">Частота: — Гц</div>
+          </div>
+
+          <!-- Center Box: Difference in Cents / Semitones & Direction -->
+          <div class="comparison-center">
+            <div style="font-size:0.64rem;font-weight:800;color:var(--text-dim);text-transform:uppercase;height:14px;line-height:14px;">Отклонение</div>
+            <div id="deltaCentsBig" class="delta-cents-big">0 ¢</div>
+            <div id="deltaDirectionText" class="delta-direction">Нет звука</div>
+          </div>
+
+          <!-- Right Box: Target String & Target Note -->
+          <div class="pitch-box target-box">
+            <div id="targetStringBadge" class="pitch-box-header">🎯 ЦЕЛЬ: 6 СТРУНА</div>
+            <div class="pitch-box-main">
+              <span id="targetNoteMain" class="pitch-big-note">E2</span>
+              <span id="targetNoteRus" class="pitch-rus-note">Ми</span>
+            </div>
+            <div id="targetFreqText" class="pitch-box-sub">Эталон: 82.41 Гц</div>
+          </div>
+        </div>
+
+        <!-- Dynamic GuitarTuna Canvas Meter -->
+        <div class="meter-wrapper">
+          <canvas id="tunerCanvas" width="680" height="175"></canvas>
+        </div>
+      </div>
+
+      <!-- Interactive Guitar Headstock -->
+      <div class="headstock-card">
+        <div class="headstock-toolbar">
+          <div class="headstock-type-title">
+            <span id="headstockTypeBadge">🎸 Акустическая гитара (Стальные струны)</span>
+          </div>
+          <div class="headstock-actions">
+            <button id="loopToneBtn" class="small-action-btn" onclick="toggleLoopTone()">
+              <span>🔁</span> Повтор эталона
+            </button>
+            <button class="small-action-btn" onclick="strumAllStrings()">
+              <span>🎶</span> Сыграть строй
+            </button>
+            <button class="small-action-btn" onclick="resetTunedMarks()">
+              <span>↺</span> Сброс
+            </button>
+          </div>
+        </div>
+
+        <!-- Pegs + SVG Headstock -->
+        <div class="headstock-interactive-area">
+          <!-- Left Pegs: Strings 4, 5, 6 -->
+          <div class="pegs-column left" id="leftPegsColumn"></div>
+
+          <!-- Center SVG Headstock -->
+          <div class="headstock-svg-container">
+            <svg id="headstockSvg" viewBox="0 0 260 350" xmlns="http://www.w3.org/2000/svg"></svg>
+          </div>
+
+          <!-- Right Pegs: Strings 3, 2, 1 -->
+          <div class="pegs-column right" id="rightPegsColumn"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: GUITARTUNA PURE-GUITAR FILTER, MIC INPUT, SPECTRUM & SIMULATOR -->
+    <section class="panel-card">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>🛡️</span> Анти-Шум GuitarTuna
+        </div>
+      </div>
+
+      <!-- GuitarTuna Pure-Guitar Acoustic Shield -->
+      <div class="filter-shield-box">
+        <div class="filter-shield-top">
+          <span>🎸 Фильтр «Только гитара»</span>
+          <button class="tuning-pill" style="padding:2px 7px;font-size:0.68rem;" onclick="calibrateRoomNoiseNow()" title="Замерить текущий шум вентилятора/комнаты и отсечь его">Калибровать фон</button>
+        </div>
+        <div class="toggle-group" id="guitarFilterSelector">
+          <button class="toggle-btn active" data-filter="strict" onclick="setGuitarFilterMode('strict')">Макс. защита</button>
+          <button class="toggle-btn" data-filter="normal" onclick="setGuitarFilterMode('normal')">Средняя</button>
+        </div>
+        <div id="filterDiagnosticText" class="filter-status-line">
+          Отсекает разговор, вентилятор и стуки
+        </div>
+      </div>
+
+      <!-- Microphone Device Selector -->
+      <div class="form-group">
+        <label class="form-label" for="micDeviceSelect">Устройство ввода (Микрофон)</label>
+        <select id="micDeviceSelect" class="select-box" onchange="switchMicDevice(this.value)">
+          <option value="default">По умолчанию (Системный микрофон)</option>
+        </select>
+      </div>
+
+      <!-- Live Microphone Signal Level Bar -->
+      <div class="form-group">
+        <div class="form-label">
+          <span>Фильтр сигнала (Зелёный = струна)</span>
+          <span id="signalRmsText" style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);">Ожидание</span>
+        </div>
+        <div class="level-bar-bg">
+          <div id="levelBarFill" class="level-bar-fill"></div>
+        </div>
+      </div>
+
+      <!-- Microphone Sensitivity / Preamp Boost -->
+      <div class="form-group">
+        <div class="form-label">
+          <span>Порог захвата струны</span>
+          <span id="sensLabel" style="font-family:var(--font-mono);color:var(--accent-green);">75% (Оптимально)</span>
+        </div>
+        <input id="sensSlider" type="range" min="10" max="100" value="75" class="range-slider" oninput="updateSensitivity(this.value)" />
+      </div>
+
+      <!-- Live Audio Spectrum / Oscilloscope -->
+      <div class="form-group">
+        <div class="form-label">
+          <span>Осциллограмма (Только струна)</span>
+          <span id="pitchConfidenceText" style="font-family:var(--font-mono);font-size:0.7rem;">Обертоны: —</span>
+        </div>
+        <div class="spectrum-canvas-wrap">
+          <canvas id="spectrumCanvas" width="300" height="82"></canvas>
+        </div>
+      </div>
+
+      <!-- Guitar Timbre / Pickup Settings -->
+      <div class="form-group" style="padding-top:4px;border-top:1px solid var(--border-subtle);">
+        <div class="form-label">
+          <span>Тембр озвучки струн</span>
+          <span id="timbreModeName" style="color:var(--theme-color);">Тёплый дредноут</span>
+        </div>
+        <div class="toggle-group" id="timbreSelector">
+          <button class="toggle-btn active" data-timbre="natural" onclick="setTimbre('natural')">Чистый</button>
+          <button class="toggle-btn" data-timbre="bright" onclick="setTimbre('bright')">Яркий</button>
+          <button class="toggle-btn" data-timbre="overdrive" onclick="setTimbre('overdrive')">Драйв</button>
+        </div>
+      </div>
+
+      <!-- Volume Control -->
+      <div class="form-group">
+        <div class="form-label">
+          <span>Громкость озвучки струн</span>
+          <span id="volLabel" style="font-family:var(--font-mono);">80%</span>
+        </div>
+        <input id="volumeSlider" type="range" min="0" max="100" value="80" class="range-slider" oninput="updateVolume(this.value)" />
+      </div>
+
+      <!-- Interactive Pitch Simulator -->
+      <div class="sim-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:0.78rem;font-weight:700;">Симулятор струны</span>
+          <span class="sim-badge">Тест без микрофона</span>
+        </div>
+        <button id="simToggleBtn" class="small-action-btn" style="width:100%;justify-content:center;" onclick="toggleSimulator()">
+          <span>🧪</span> Включить симулятор струны
+        </button>
+        <div id="simControlsWrap" style="display:none;flex-direction:column;gap:6px;margin-top:4px;">
+          <div class="form-label">
+            <span>Расстройка выбранной струны</span>
+            <span id="simCentsLabel" style="font-family:var(--font-mono);color:var(--accent-amber);">-25 ¢</span>
+          </div>
+          <input id="simCentsSlider" type="range" min="-150" max="150" step="1" value="-25" class="range-slider" oninput="updateSimulatorCents(this.value)" />
+          <div style="display:flex;justify-content:space-between;font-size:0.68rem;color:var(--text-dim);">
+            <span>-1.5 пт (-150¢)</span>
+            <span style="color:var(--accent-green);cursor:pointer;font-weight:700;" onclick="updateSimulatorCents(0)">Точно в 0¢</span>
+            <span>+1.5 пт (+150¢)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= APPLICATION SCRIPT ================= -->
+  <script>
+    /*************************************************************************
+     * 1. MUSICAL DATA: NOTES, TUNINGS & GUITAR PROFILES
+     *************************************************************************/
+    const NOTE_NAMES_EN = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const NOTE_NAMES_RU = ['До', 'До#', 'Ре', 'Ре#', 'Ми', 'Фа', 'Фа#', 'Соль', 'Соль#', 'Ля', 'Ля#', 'Си'];
+
+    const TUNINGS = {
+      standard: {
+        name: 'Стандартный Ми (E Standard)',
+        midi: [40, 45, 50, 55, 59, 64],
+        desc: 'Классический стандартный строй 6-струнной гитары (Ми-Ля-Ре-Соль-Си-Ми). Используется в 90% музыки для акустики, классики и электрогитары.'
+      },
+      half_down: {
+        name: 'На полтона ниже (Eb Standard)',
+        midi: [39, 44, 49, 54, 58, 63],
+        desc: 'Все струны опущены на полтона (D# G# C# F# A# D#). Мягче натяжение струн, глубокий тембр (Nirvana, Jimi Hendrix, Guns N\' Roses).'
+      },
+      full_down: {
+        name: 'На тон ниже (D Standard)',
+        midi: [38, 43, 48, 53, 57, 62],
+        desc: 'Все струны опущены на целый тон (D G C F A D). Даёт плотное, бархатное звучание на акустике и мощный рык на электрогитаре.'
+      },
+      csharp_std: {
+        name: 'На 1.5 тона ниже (C# Standard)',
+        midi: [37, 42, 47, 52, 56, 61],
+        desc: 'Строй C# F# B E G# C# — культовый строй Black Sabbath и тяжёлого рока.'
+      },
+      c_std: {
+        name: 'На 2 тона ниже (C Standard)',
+        midi: [36, 41, 46, 51, 55, 60],
+        desc: 'Низкий строй До (C F A# D# G C) для стоунер-рока, дум-метала и глубоких акустических аранжировок.'
+      },
+      b_std: {
+        name: 'Баритон (B Standard)',
+        midi: [35, 40, 45, 50, 54, 59],
+        desc: 'Строй баритон-гитары или 7-струнной гитары без первой струны (B E A D F# B).'
+      },
+      drop_d: {
+        name: 'Drop D (Дроп Ре)',
+        midi: [38, 45, 50, 55, 59, 64],
+        desc: 'Шестая струна опущена на тон до Ре (D2). Позволяет брать мощные квинт-аккорды одним пальцем и даёт богатый бас в фингерстайле.'
+      },
+      drop_csharp: {
+        name: 'Drop C# (Дроп До-диез)',
+        midi: [37, 44, 49, 54, 58, 63],
+        desc: 'Eb Standard с опущенной на тон 6-й струной (C# G# C# F# A# D#). Популярен в альтернативном роке (System of a Down, Deftones).'
+      },
+      drop_c: {
+        name: 'Drop C (Дроп До)',
+        midi: [36, 43, 48, 53, 57, 62],
+        desc: 'D Standard с 6-й струной в До (C2). Один из самых популярных строев для современного метала и тяжёлого рока.'
+      },
+      drop_b: {
+        name: 'Drop B (Дроп Си)',
+        midi: [35, 42, 47, 52, 56, 61],
+        desc: 'Экстремально низкий Drop-строй (B1 F#2 B2 E3 G#3 C#4) с мощным суб-басом (Slipknot, Rammstein).'
+      },
+      drop_a: {
+        name: 'Drop A (Дроп Ля)',
+        midi: [33, 40, 45, 50, 54, 59],
+        desc: 'Ультра-низкий строй с 6-й струной Ля контроктавы (A1 = 55 Гц).'
+      },
+      double_drop_d: {
+        name: 'Double Drop D (Двойной Дроп Ре)',
+        midi: [38, 45, 50, 55, 59, 62],
+        desc: 'Первая и шестая струны опущены в Ре (D). Любимый строй Нила Янга и исполнителей фолк-рока.'
+      },
+      open_d: {
+        name: 'Open D (Открытый Ре мажор)',
+        midi: [38, 45, 50, 54, 57, 62],
+        desc: 'Открытые струны образуют аккорд Ре мажор (D A D F# A D). Идеален для слайд-гитары, блюза и акустического фингерстайла.'
+      },
+      open_g: {
+        name: 'Open G (Открытый Соль / Русский 6-стр.)',
+        midi: [38, 43, 50, 55, 59, 62],
+        desc: 'Открытый аккорд Соль мажор (D G D G B D). Классика блюза, Rolling Stones и близкий родственник русского строя.'
+      },
+      open_e: {
+        name: 'Open E (Открытый Ми мажор)',
+        midi: [40, 47, 52, 56, 59, 64],
+        desc: 'Яркий открытый строй Ми мажор (E B E G# B E) для игры слайдом.'
+      },
+      open_a: {
+        name: 'Open A (Открытый Ля мажор)',
+        midi: [40, 45, 52, 57, 61, 64],
+        desc: 'Открытый строй Ля мажор (E A E A C# E) для звонкого дельта-блюза и слайда.'
+      },
+      open_c: {
+        name: 'Open C (Открытый До мажор)',
+        midi: [36, 43, 48, 55, 60, 64],
+        desc: 'Оркестровый диапазон от глубокого C2 до E4 (C G C G C E).'
+      },
+      open_em: {
+        name: 'Open Em (Открытый Ми минор)',
+        midi: [40, 47, 52, 55, 59, 64],
+        desc: 'Меланхоличный открытый строй Ми минор (E B E G B E).'
+      },
+      dadgad: {
+        name: 'DADGAD (Кельтский строй)',
+        midi: [38, 45, 50, 55, 57, 62],
+        desc: 'Открытый аккорд Dsus4 (D A D G A D). Создаёт гипнотическое звучание для кельтской музыки и фингерстайла.'
+      },
+      all_fourths: {
+        name: 'Все кварты (All Fourths)',
+        midi: [40, 45, 50, 55, 60, 65],
+        desc: 'Симметричный строй (E A D G C F), где интервал между соседними струнами — чистая кварта.'
+      },
+      nst: {
+        name: 'New Standard Tuning (Роберт Фрипп)',
+        midi: [36, 43, 50, 57, 64, 67],
+        desc: 'Строй по квинтам (C2 G2 D3 A3 E4 G4), разработанный Робертом Фриппом.'
+      },
+      custom: {
+        name: 'Свой строй (Индивидуальная настройка)',
+        midi: [40, 45, 50, 55, 59, 64],
+        desc: 'Настройте каждую из 6 струн в любую нужную ноту с помощью кнопок «-» и «+» ниже.'
+      }
+    };
+
+    const GUITAR_PROFILES = {
+      acoustic: {
+        label: '🎸 Акустическая гитара (Стальные струны)',
+        timbreDefault: 'Тёплый дредноут (Бронза)',
+        decay: 3.5,
+        brightness: 0.78,
+        bodyFreq: 195,
+        bodyGain: 6.5,
+        pluckNoise: 0.55
+      },
+      classical: {
+        label: '🎼 Классическая гитара (Нейлоновые струны)',
+        timbreDefault: 'Мягкий испанский нейлон',
+        decay: 2.9,
+        brightness: 0.42,
+        bodyFreq: 225,
+        bodyGain: 8.0,
+        pluckNoise: 0.25
+      },
+      electric: {
+        label: '⚡ Электрогитара (Магнитные звукосниматели)',
+        timbreDefault: 'Электрический хамбакер / сингл',
+        decay: 4.3,
+        brightness: 0.92,
+        bodyFreq: 850,
+        bodyGain: 4.5,
+        pluckNoise: 0.75
+      }
+    };
+
+    /*************************************************************************
+     * 2. APPLICATION STATE
+     *************************************************************************/
+    const state = {
+      guitarType: 'acoustic',
+      tuningKey: 'standard',
+      customMidi: [40, 45, 50, 55, 59, 64],
+      transpose: 0,
+      a4: 440,
+      notation: 'en',
+      autoMode: true,
+      guitarFilterMode: 'strict',  // 'strict' | 'normal'
+      selectedStringIndex: 0,      // 0..5 (0 = 6th string, 5 = 1st string)
+      tunedStrings: [false, false, false, false, false, false],
+      timbre: 'natural',
+      volume: 0.8,
+      sensitivityPercent: 75,
+      loopTone: false,
+      loopTimer: null,
+
+      // Microphone & Web Audio DSP nodes
+      isListening: false,
+      selectedDeviceId: 'default',
+      audioCtx: null,
+      micStream: null,
+      preampNode: null,
+      yinAnalyser: null,
+      fftAnalyser: null,           // 8192-point high-resolution FFT for needle-harmonic verification
+      timeDomainBuf: null,
+      fftFreqBuf: null,
+
+      // Adaptive room noise & guitar string lock state
+      ambientNoiseRms: 0.004,      // Learned background (fan/room) level — updated only between plucks
+      rmsHistory: [],              // Recent frame levels for pluck-onset detection
+      onsetUntil: 0,               // Timestamp until which a fresh pluck may start a new string lock
+      lockFreq: 0,                 // Frequency of the currently locked string (tracks peg turning)
+      lastLockEndTime: 0,
+      lastLockFreq: 0,
+      stabilityWindow: [],         // Frames collected while verifying a new string lock
+      missedFramesCount: 0,
+      recentFreqBuffer: [],
+      candidateStringIdx: 0,
+      candidateStringCount: 0,
+      smoothedFreq: 0,
+      smoothedCents: 0,
+      smoothedRawCents: 0,
+      confidence: 0,
+      harmonicScore: 0,
+      lastRejectionReason: '',
+      signalRms: 0,
+      hasLiveSignal: false,
+      lastValidPitchTime: 0,
+      lastTextRenderTime: 0,
+      inTuneHoldFrames: 0,
+      pitchHistory: [],
+      stringVibration: [0, 0, 0, 0, 0, 0],
+
+      // Simulator state
+      simulatorActive: false,
+      simCents: -25
+    };
+
+    const LIVE_DEBOUNCE_MS = 300;   // Keep string lock through short dropouts while the string decays
+    const HOLD_DURATION_MS = 1400;  // Short 1.4s hold after verified guitar string pluck
+    const ONSET_WINDOW_MS = 900;    // After a pluck attack, a string lock may be acquired within this time
+    const RELOCK_WINDOW_MS = 1500;  // Re-acquire the same string after a brief dropout without a new pluck
+
+    /*************************************************************************
+     * 3. MUSICAL HELPER FUNCTIONS
+     *************************************************************************/
+    function midiToFreq(midi, a4 = state.a4) {
+      return a4 * Math.pow(2, (midi - 69) / 12);
+    }
+
+    function freqToExactMidi(freq, a4 = state.a4) {
+      return 69 + 12 * Math.log2(freq / a4);
+    }
+
+    function getActiveMidiArray() {
+      const base = state.tuningKey === 'custom'
+        ? state.customMidi
+        : TUNINGS[state.tuningKey].midi;
+      return base.map(m => m + state.transpose);
+    }
+
+    function formatMidiNote(midi, lang = state.notation) {
+      const noteIdx = ((midi % 12) + 12) % 12;
+      const octave = Math.floor(midi / 12) - 1;
+      const name = lang === 'ru' ? NOTE_NAMES_RU[noteIdx] : NOTE_NAMES_EN[noteIdx];
+      return `${name}${octave}`;
+    }
+
+    function getNoteBothNames(midi) {
+      const noteIdx = ((midi % 12) + 12) % 12;
+      const octave = Math.floor(midi / 12) - 1;
+      return {
+        en: `${NOTE_NAMES_EN[noteIdx]}${octave}`,
+        ru: `${NOTE_NAMES_RU[noteIdx]}${octave}`,
+        ruNameOnly: NOTE_NAMES_RU[noteIdx],
+        octave
+      };
+    }
+
+    function centsBetweenFreqs(fDetected, fTarget) {
+      return 1200 * Math.log2(fDetected / fTarget);
+    }
+
+    function getMedian(arr) {
+      if (arr.length === 0) return 0;
+      const sorted = [...arr].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+
+    /*************************************************************************
+     * 4. REALISTIC WEB AUDIO GUITAR SYNTHESIZER
+     *************************************************************************/
+    function ensureAudioContext() {
+      if (!state.audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        state.audioCtx = new AudioContextClass();
+      }
+      if (state.audioCtx.state === 'suspended') {
+        state.audioCtx.resume();
+      }
+      return state.audioCtx;
+    }
+
+    function playStringTone(stringIdx) {
+      if (state.volume <= 0.01) return;
+      const ctx = ensureAudioContext();
+      const midiArr = getActiveMidiArray();
+      const midi = midiArr[stringIdx];
+      const freq = midiToFreq(midi);
+      const profile = GUITAR_PROFILES[state.guitarType];
+
+      state.stringVibration[stringIdx] = 1.0;
+
+      const now = ctx.currentTime;
+      const duration = profile.decay;
+      const sampleRate = ctx.sampleRate;
+      const totalSamples = Math.floor(sampleRate * duration);
+
+      const buffer = ctx.createBuffer(1, totalSamples, sampleRate);
+      const data = buffer.getChannelData(0);
+      const period = Math.max(2, Math.round(sampleRate / freq));
+      const delayLine = new Float32Array(period);
+
+      for (let i = 0; i < period; i++) {
+        const phase = (i / period) * Math.PI * 2;
+        const warmWave = Math.sin(phase) * 0.6 + Math.sin(phase * 2) * 0.25;
+        const noise = (Math.random() * 2 - 1) * profile.pluckNoise;
+        const win = state.guitarType === 'classical' ? Math.sin((i / period) * Math.PI) : 1.0;
+        delayLine[i] = (warmWave + noise) * win;
+      }
+
+      let brightness = profile.brightness;
+      if (state.timbre === 'bright') brightness = Math.min(0.97, brightness + 0.14);
+      if (state.timbre === 'overdrive') brightness = Math.min(0.98, brightness + 0.18);
+
+      const feedback = 0.994 - (stringIdx * 0.0005);
+      const smoothFactor = 0.5 * (1 - brightness * 0.45);
+
+      let ptr = 0;
+      for (let i = 0; i < totalSamples; i++) {
+        const current = delayLine[ptr];
+        data[i] = current;
+        const nextPtr = (ptr + 1) % period;
+        delayLine[ptr] = ((1 - smoothFactor) * current + smoothFactor * delayLine[nextPtr]) * feedback;
+        ptr = nextPtr;
+      }
+
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+
+      const bodyFilter = ctx.createBiquadFilter();
+      bodyFilter.type = 'peaking';
+      bodyFilter.frequency.value = profile.bodyFreq;
+      bodyFilter.Q.value = 1.6;
+      bodyFilter.gain.value = profile.bodyGain;
+
+      let lastNode = bodyFilter;
+      source.connect(bodyFilter);
+
+      if (state.timbre === 'overdrive' || (state.guitarType === 'electric' && state.timbre !== 'natural')) {
+        const shaper = ctx.createWaveShaper();
+        const driveAmount = state.timbre === 'overdrive' ? 28 : 8;
+        const nSamples = 4096;
+        const curve = new Float32Array(nSamples);
+        for (let i = 0; i < nSamples; i++) {
+          const x = (i * 2) / nSamples - 1;
+          curve[i] = ((3 + driveAmount) * x * 20 * (Math.PI / 180)) / (Math.PI + driveAmount * Math.abs(x));
+        }
+        shaper.curve = curve;
+        shaper.oversample = '2x';
+
+        const cabFilter = ctx.createBiquadFilter();
+        cabFilter.type = 'lowpass';
+        cabFilter.frequency.value = 3400;
+
+        lastNode.connect(shaper);
+        shaper.connect(cabFilter);
+        lastNode = cabFilter;
+      }
+
+      const gainNode = ctx.createGain();
+      gainNode.gain.setValueAtTime(state.volume * 0.55, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      lastNode.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      source.start(now);
+      source.stop(now + duration);
+    }
+
+    function playInTuneChime() {
+      if (state.volume <= 0.01) return;
+      const ctx = ensureAudioContext();
+      const now = ctx.currentTime;
+      [587.33, 880.0].forEach((f, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f, now + idx * 0.08);
+        gain.gain.setValueAtTime(0.001, now + idx * 0.08);
+        gain.gain.linearRampToValueAtTime(state.volume * 0.16, now + idx * 0.08 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + 0.45);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.08);
+        osc.stop(now + idx * 0.08 + 0.46);
+      });
+    }
+
+    function strumAllStrings() {
+      for (let i = 0; i < 6; i++) {
+        setTimeout(() => playStringTone(i), i * 130);
+      }
+    }
+
+    /*************************************************************************
+     * 5. GUITARTUNA DSP PIPELINE: FAN & SPEECH REJECTION + NEEDLE HARMONICS
+     *************************************************************************/
+    async function populateMicDevices() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter(d => d.kind === 'audioinput');
+        const select = document.getElementById('micDeviceSelect');
+        if (audioInputs.length > 0) {
+          select.innerHTML = '';
+          audioInputs.forEach((dev, i) => {
+            const opt = document.createElement('option');
+            opt.value = dev.deviceId;
+            opt.textContent = dev.label || `Микрофон #${i + 1}`;
+            if (dev.deviceId === state.selectedDeviceId) opt.selected = true;
+            select.appendChild(opt);
+          });
+        }
+      } catch (e) {
+        console.warn('Could not enumerate audio devices:', e);
+      }
+    }
+
+    async function switchMicDevice(deviceId) {
+      state.selectedDeviceId = deviceId;
+      if (state.isListening) {
+        stopMicrophone();
+        await toggleMicrophone();
+      }
+    }
+
+    function calibrateRoomNoiseNow() {
+      if (state.signalRms > 0) {
+        state.ambientNoiseRms = Math.max(0.001, state.signalRms * 1.2);
+      }
+      state.hasLiveSignal = false;
+      state.stabilityWindow = [];
+      state.lastValidPitchTime = 0;
+      document.getElementById('filterDiagnosticText').textContent = 'Фоновый шум откалиброван ✓';
+    }
+
+    async function toggleMicrophone() {
+      const btn = document.getElementById('micToggleBtn');
+      const btnText = document.getElementById('micBtnText');
+      const micIcon = document.getElementById('micIcon');
+
+      if (state.isListening) {
+        stopMicrophone();
+        btn.classList.remove('listening');
+        btnText.textContent = 'Включить микрофон';
+        micIcon.textContent = '🎤';
+        updateCurrentDetectedReadout(false, true);
+        return;
+      }
+
+      try {
+        const ctx = ensureAudioContext();
+        const audioConstraints = {
+          echoCancellation: false,
+          autoGainControl: false,
+          noiseSuppression: false
+        };
+        if (state.selectedDeviceId && state.selectedDeviceId !== 'default') {
+          audioConstraints.deviceId = { exact: state.selectedDeviceId };
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
+        state.micStream = stream;
+        await populateMicDevices();
+
+        const source = ctx.createMediaStreamSource(stream);
+
+        const preamp = ctx.createGain();
+        preamp.gain.value = 0.8 + (state.sensitivityPercent / 100) * 2.2;
+        state.preampNode = preamp;
+
+        // High-pass at 55 Hz removes fan rumble, desk thumps, and 50Hz mains hum
+        const hpFilter = ctx.createBiquadFilter();
+        hpFilter.type = 'highpass';
+        hpFilter.frequency.value = 55;
+
+        // 8192-point FFT (~5.8 Hz per bin!) resolves razor-sharp guitar harmonic needles vs wide voice formants
+        const fftAnalyser = ctx.createAnalyser();
+        fftAnalyser.fftSize = 8192;
+        fftAnalyser.smoothingTimeConstant = 0.15;
+
+        // Low-pass filter at 900 Hz for YIN fundamental detector
+        const lpFilter = ctx.createBiquadFilter();
+        lpFilter.type = 'lowpass';
+        lpFilter.frequency.value = 900;
+
+        const yinAnalyser = ctx.createAnalyser();
+        yinAnalyser.fftSize = 2048;
+        yinAnalyser.smoothingTimeConstant = 0.0;
+
+        source.connect(preamp);
+        preamp.connect(hpFilter);
+        hpFilter.connect(fftAnalyser);
+        hpFilter.connect(lpFilter);
+        lpFilter.connect(yinAnalyser);
+
+        state.yinAnalyser = yinAnalyser;
+        state.fftAnalyser = fftAnalyser;
+        state.timeDomainBuf = new Float32Array(yinAnalyser.fftSize);
+        state.fftFreqBuf = new Float32Array(fftAnalyser.frequencyBinCount);
+        state.ambientNoiseRms = 0.004;
+        state.rmsHistory = [];
+        state.onsetUntil = 0;
+        state.lockFreq = 0;
+        state.lastLockFreq = 0;
+        state.stabilityWindow = [];
+        state.isListening = true;
+
+        if (state.simulatorActive) {
+          toggleSimulator(false);
+        }
+
+        btn.classList.add('listening');
+        btnText.textContent = 'Слушаю гитару...';
+        micIcon.textContent = '🔴';
+        updateCurrentDetectedReadout(false, true);
+      } catch (err) {
+        alert('Не удалось включить микрофон. Разрешите доступ к микрофону в браузере или воспользуйтесь встроенным «Симулятором струны» справа.');
+        console.error(err);
+      }
+    }
+
+    function stopMicrophone() {
+      state.isListening = false;
+      if (state.micStream) {
+        state.micStream.getTracks().forEach(t => t.stop());
+        state.micStream = null;
+      }
+      state.hasLiveSignal = false;
+      state.stabilityWindow = [];
+    }
+
+    /**
+     * Stage A: Harmonic Comb & Overtone Validation
+     * Confirms that candidate f0 has acoustic string characteristics (peaks at f0, 2f0 or 3f0)
+     * and is not pure wideband noise (like clicks, coughs, or whistling).
+     */
+    function validateGuitarHarmonicSignature(f0, fftBuf, sampleRate, fftSize, isStrict) {
+      const binWidth = sampleRate / fftSize;
+      const h1Bin = Math.round(f0 / binWidth);
+      const h2Bin = Math.round((f0 * 2) / binWidth);
+      const h3Bin = Math.round((f0 * 3) / binWidth);
+
+      function getBinPeak(center, radius = 3) {
+        let maxDb = -140;
+        const start = Math.max(1, center - radius);
+        const end = Math.min(fftBuf.length - 1, center + radius);
+        for (let b = start; b <= end; b++) {
+          if (fftBuf[b] > maxDb) maxDb = fftBuf[b];
+        }
+        return maxDb;
+      }
+
+      const h1 = getBinPeak(h1Bin);
+      const h2 = getBinPeak(h2Bin);
+      const h3 = getBinPeak(h3Bin);
+      const maxHarmonic = Math.max(h1, h2, h3);
+
+      // Measure local sideband around the strongest harmonic
+      const strongBin = maxHarmonic === h1 ? h1Bin : (maxHarmonic === h2 ? h2Bin : h3Bin);
+      let sidebandSum = 0;
+      let sidebandCount = 0;
+      for (let offset = 6; offset <= 12; offset++) {
+        if (strongBin - offset >= 1) { sidebandSum += fftBuf[strongBin - offset]; sidebandCount++; }
+        if (strongBin + offset < fftBuf.length) { sidebandSum += fftBuf[strongBin + offset]; sidebandCount++; }
+      }
+      const sidebandAvg = sidebandCount > 0 ? sidebandSum / sidebandCount : -100;
+      const prominence = maxHarmonic - sidebandAvg;
+      state.harmonicScore = Math.max(0, prominence);
+
+      // High frequency band (2500 - 5000 Hz) to reject hiss/clicks
+      const hfStart = Math.floor(2500 / binWidth);
+      const hfEnd = Math.min(fftBuf.length - 1, Math.floor(5000 / binWidth));
+      let hfMax = -140;
+      for (let b = hfStart; b <= hfEnd; b++) {
+        if (fftBuf[b] > hfMax) hfMax = fftBuf[b];
+      }
+
+      // If high frequency noise is louder than guitar harmonics, it's a click/hiss
+      if (maxHarmonic - hfMax < (isStrict ? 6 : 2)) {
+        state.lastRejectionReason = 'ВЧ-шум / щелчок';
+        return false;
+      }
+
+      // Prominence threshold: relaxed so quiet acoustic plucks aren't dropped
+      const minProminence = state.hasLiveSignal ? 4.5 : (isStrict ? 7.0 : 5.0);
+      if (prominence < minProminence) {
+        state.lastRejectionReason = 'Слабый тон струны';
+        return false;
+      }
+
+      return true;
+    }
+
+    /**
+     * Stage B: Guitar String Capture Window
+     */
+    function isWithinGuitarStringWindow(freq, isStrict) {
+      const midiArr = getActiveMidiArray();
+      const minMidi = Math.min(...midiArr);
+      const maxMidi = Math.max(...midiArr);
+
+      // Fundamentals for 6-string guitar lie between ~50 Hz (Drop A) and ~360 Hz (high E with leeway)
+      const minAllowedFreq = Math.max(45, midiToFreq(minMidi - 4));
+      const maxAllowedFreq = Math.min(480, midiToFreq(maxMidi + 4));
+      if (freq < minAllowedFreq || freq > maxAllowedFreq) {
+        state.lastRejectionReason = `Вне диапазона гитары (${Math.round(freq)} Гц)`;
+        return false;
+      }
+
+      if (!state.autoMode) {
+        const targetFreq = midiToFreq(midiArr[state.selectedStringIndex]);
+        const absCents = Math.abs(centsBetweenFreqs(freq, targetFreq));
+        if (absCents > (isStrict ? 320 : 450)) {
+          state.lastRejectionReason = `Далеко от ${6 - state.selectedStringIndex} струны`;
+          return false;
+        }
+        return true;
+      }
+
+      let minCentsToAnyString = Infinity;
+      for (let i = 0; i < 6; i++) {
+        const tf = midiToFreq(midiArr[i]);
+        const c = Math.abs(centsBetweenFreqs(freq, tf));
+        if (c < minCentsToAnyString) minCentsToAnyString = c;
+      }
+
+      // Allows up to 2.5 semitones off in strict mode, 3.5 in normal
+      const maxCaptureCents = isStrict ? 250 : 360;
+      if (minCentsToAnyString > maxCaptureCents) {
+        state.lastRejectionReason = 'Нота между струнами';
+        return false;
+      }
+      return true;
+    }
+
+    /**
+     * Stage C: Fast & Sensitive YIN Fundamental Periodicity + Dynamic Pluck Gating
+     */
+    function detectGuitarPitch(timeBuf, fftBuf, sampleRate, fftSize) {
+      const n = timeBuf.length;
+      const halfN = Math.floor(n / 2);
+      const isStrict = state.guitarFilterMode === 'strict';
+
+      // 1. Remove DC offset and compute RMS
+      let mean = 0;
+      for (let i = 0; i < n; i++) mean += timeBuf[i];
+      mean /= n;
+
+      let rms = 0;
+      for (let i = 0; i < n; i++) {
+        const v = timeBuf[i] - mean;
+        rms += v * v;
+      }
+      rms = Math.sqrt(rms / n);
+      state.signalRms = rms;
+
+      // Update short RMS history
+      if (!state.rmsHistory) state.rmsHistory = [];
+      state.rmsHistory.push(rms);
+      if (state.rmsHistory.length > 6) state.rmsHistory.shift();
+
+      // Detect attack/pluck onset: sudden rise in volume
+      const minRecentRms = Math.min(...state.rmsHistory);
+      const nowMs = performance.now();
+      if (rms > minRecentRms * 1.35 && rms > 0.003) {
+        state.onsetUntil = nowMs + 1000;
+      }
+
+      // Update ambient noise floor gently when quiet and not locked
+      if (!state.hasLiveSignal) {
+        if (rms < state.ambientNoiseRms) {
+          state.ambientNoiseRms = state.ambientNoiseRms * 0.94 + rms * 0.06;
+        } else if (nowMs > state.onsetUntil) {
+          state.ambientNoiseRms = state.ambientNoiseRms * 0.985 + rms * 0.015;
+        }
+      }
+      state.ambientNoiseRms = Math.max(0.001, Math.min(0.08, state.ambientNoiseRms));
+
+      // Dynamic gate: highly responsive to plucks, yet cuts out continuous fan noise
+      const sens = state.sensitivityPercent / 100;
+      const baseGate = 0.002 + Math.pow(1.0 - sens, 2) * 0.008;
+      const snrFactor = state.hasLiveSignal ? 1.25 : (isStrict ? 1.6 : 1.35);
+      const effectiveGate = state.hasLiveSignal ? baseGate * 0.5 : Math.max(baseGate, state.ambientNoiseRms * snrFactor);
+
+      if (rms < effectiveGate) {
+        state.lastRejectionReason = 'Ниже порога громкости';
+        return { freq: -1, confidence: 0 };
+      }
+
+      // 2. YIN Periodicity Search
+      const midiArr = getActiveMidiArray();
+      const minGuitarFreq = Math.max(45, midiToFreq(Math.min(...midiArr) - 4));
+      const maxGuitarFreq = Math.min(450, midiToFreq(Math.max(...midiArr) + 4));
+
+      const minTau = Math.max(4, Math.floor(sampleRate / maxGuitarFreq));
+      const maxTau = Math.min(halfN - 2, Math.floor(sampleRate / minGuitarFreq));
+
+      const cmndf = new Float32Array(maxTau + 2);
+      cmndf[0] = 1;
+      let runningSum = 0;
+
+      for (let tau = 1; tau <= maxTau; tau++) {
+        let diff = 0;
+        for (let i = 0; i < halfN; i++) {
+          const delta = (timeBuf[i] - mean) - (timeBuf[i + tau] - mean);
+          diff += delta * delta;
+        }
+        runningSum += diff;
+        cmndf[tau] = runningSum > 0 ? (diff * tau) / runningSum : 1;
+      }
+
+      const yinThreshold = state.hasLiveSignal ? 0.28 : (isStrict ? 0.20 : 0.25);
+      let bestTau = -1;
+
+      for (let tau = minTau; tau <= maxTau; tau++) {
+        if (cmndf[tau] < yinThreshold) {
+          while (tau + 1 <= maxTau && cmndf[tau + 1] < cmndf[tau]) {
+            tau++;
+          }
+          bestTau = tau;
+          break;
+        }
+      }
+
+      if (bestTau === -1) {
+        let minVal = 1.0;
+        let minIdx = -1;
+        for (let tau = minTau; tau <= maxTau; tau++) {
+          if (cmndf[tau] < minVal) {
+            minVal = cmndf[tau];
+            minIdx = tau;
+          }
+        }
+        const maxDip = state.hasLiveSignal ? 0.35 : 0.28;
+        if (minVal < maxDip) {
+          bestTau = minIdx;
+        } else {
+          state.lastRejectionReason = 'Непериодический сигнал';
+          return { freq: -1, confidence: 0 };
+        }
+      }
+
+      // Sub-harmonic octave guard for bass strings (low E, A)
+      const doubleTau = bestTau * 2;
+      if (doubleTau <= maxTau - 2) {
+        let subMinTau = doubleTau;
+        let subMinVal = cmndf[doubleTau];
+        for (let t = Math.max(minTau, doubleTau - 3); t <= Math.min(maxTau, doubleTau + 3); t++) {
+          if (cmndf[t] < subMinVal) {
+            subMinVal = cmndf[t];
+            subMinTau = t;
+          }
+        }
+        if (subMinVal < 0.28 && subMinVal < cmndf[bestTau] * 1.5) {
+          bestTau = subMinTau;
+        }
+      }
+
+      const confidence = Math.max(0, Math.min(1, 1 - cmndf[bestTau]));
+      const minConfidence = state.hasLiveSignal ? 0.60 : (isStrict ? 0.70 : 0.64);
+      if (confidence < minConfidence) {
+        state.lastRejectionReason = 'Низкая чистота тона';
+        return { freq: -1, confidence };
+      }
+
+      // Parabolic interpolation for sub-cent precision
+      let refinedTau = bestTau;
+      if (bestTau > minTau && bestTau < maxTau) {
+        const s0 = cmndf[bestTau - 1];
+        const s1 = cmndf[bestTau];
+        const s2 = cmndf[bestTau + 1];
+        const denom = 2 * (2 * s1 - s2 - s0);
+        if (Math.abs(denom) > 1e-7) {
+          const delta = (s2 - s0) / denom;
+          if (Math.abs(delta) < 1) {
+            refinedTau = bestTau + delta;
+          }
+        }
+      }
+
+      const f0 = sampleRate / refinedTau;
+
+      if (!isWithinGuitarStringWindow(f0, isStrict)) {
+        return { freq: -1, confidence };
+      }
+
+      if (!validateGuitarHarmonicSignature(f0, fftBuf, sampleRate, fftSize, isStrict)) {
+        return { freq: -1, confidence };
+      }
+
+      return { freq: f0, confidence };
+    }
+
+    /*************************************************************************
+     * 6. UI RENDERING (BUILD ONCE, UPDATE CLASSES ONLY — ZERO REFLOW)
+     *************************************************************************/
+    function renderAllUI() {
+      document.body.setAttribute('data-guitar', state.guitarType);
+
+      document.querySelectorAll('.guitar-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.type === state.guitarType);
+      });
+
+      const profile = GUITAR_PROFILES[state.guitarType];
+      document.getElementById('headstockTypeBadge').textContent = profile.label;
+      document.getElementById('timbreModeName').textContent = profile.timbreDefault;
+
+      document.getElementById('tuningSelect').value = state.tuningKey;
+      document.querySelectorAll('#quickTuningPills .tuning-pill').forEach(pill => {
+        pill.classList.toggle('active', pill.dataset.tuning === state.tuningKey);
+      });
+
+      document.getElementById('tuningDescription').textContent = TUNINGS[state.tuningKey].desc;
+
+      const customEditor = document.getElementById('customEditor');
+      customEditor.classList.toggle('visible', state.tuningKey === 'custom');
+      if (state.tuningKey === 'custom') {
+        renderCustomEditorRows();
+      }
+
+      renderStringsOverview();
+      renderPegButtons();
+      renderHeadstockSVG();
+      updateTargetReadout();
+    }
+
+    function syncActiveStringClasses() {
+      for (let idx = 0; idx < 6; idx++) {
+        const isSelected = state.selectedStringIndex === idx;
+        const isTuned = state.tunedStrings[idx];
+        const stringNum = 6 - idx;
+
+        const miniCard = document.getElementById(`mini-card-${idx}`);
+        if (miniCard) {
+          miniCard.classList.toggle('active', isSelected);
+          miniCard.classList.toggle('tuned', isTuned);
+        }
+
+        const pegBtn = document.getElementById(`peg-btn-${idx}`);
+        if (pegBtn) {
+          pegBtn.classList.toggle('selected', isSelected);
+          pegBtn.classList.toggle('tuned', isTuned);
+          const numBadge = pegBtn.querySelector('.peg-string-num');
+          if (numBadge) numBadge.textContent = isTuned ? '✓' : stringNum;
+        }
+
+        let baseColor = '#d1d5db';
+        if (state.guitarType === 'acoustic') {
+          baseColor = idx < 4 ? '#f59e0b' : '#e5e7eb';
+        } else if (state.guitarType === 'classical') {
+          baseColor = idx < 3 ? '#cbd5e1' : 'rgba(244, 114, 182, 0.85)';
+        } else {
+          baseColor = '#38bdf8';
+        }
+        const activeColor = isSelected ? '#10e878' : (isTuned ? '#34d399' : baseColor);
+
+        const upperStr = document.getElementById(`svg-str-upper-${idx}`);
+        const lowerStr = document.getElementById(`svg-str-lower-${idx}`);
+        const connLine = document.getElementById(`svg-conn-${idx}`);
+        const postOuter = document.getElementById(`svg-post-outer-${idx}`);
+        const postInner = document.getElementById(`svg-post-inner-${idx}`);
+
+        if (upperStr) upperStr.setAttribute('stroke', activeColor);
+        if (lowerStr) lowerStr.setAttribute('stroke', activeColor);
+        if (connLine) {
+          connLine.setAttribute('stroke', isSelected ? '#10e878' : 'rgba(255,255,255,0.18)');
+          connLine.setAttribute('stroke-width', isSelected ? '2.5' : '1.2');
+          connLine.setAttribute('stroke-dasharray', isSelected ? 'none' : '3,3');
+        }
+        if (postOuter) postOuter.setAttribute('stroke', activeColor);
+        if (postInner) postInner.setAttribute('fill', activeColor);
+      }
+      updateTargetReadout();
+    }
+
+    function renderStringsOverview() {
+      const container = document.getElementById('stringsOverview');
+      const midiArr = getActiveMidiArray();
+      container.innerHTML = '';
+
+      midiArr.forEach((midi, idx) => {
+        const stringNumber = 6 - idx;
+        const freq = midiToFreq(midi);
+        const card = document.createElement('div');
+        card.id = `mini-card-${idx}`;
+        card.className = 'string-mini-card' +
+          (state.selectedStringIndex === idx ? ' active' : '') +
+          (state.tunedStrings[idx] ? ' tuned' : '');
+        card.onclick = () => selectAndPlayString(idx);
+        card.innerHTML = `
+          <div class="string-mini-num">${stringNumber} стр</div>
+          <div class="string-mini-note">${formatMidiNote(midi)}</div>
+          <div class="string-mini-freq">${freq.toFixed(1)}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderCustomEditorRows() {
+      const wrap = document.getElementById('customEditorRows');
+      wrap.innerHTML = '';
+      state.customMidi.forEach((midi, idx) => {
+        const stringNum = 6 - idx;
+        const row = document.createElement('div');
+        row.className = 'custom-row';
+        row.innerHTML = `
+          <span><strong>${stringNum} струна</strong>: ${formatMidiNote(midi + state.transpose, 'en')} (${formatMidiNote(midi + state.transpose, 'ru')})</span>
+          <div class="semitone-controls">
+            <button class="mini-btn" onclick="adjustCustomString(${idx}, -1)">-</button>
+            <button class="mini-btn" onclick="adjustCustomString(${idx}, 1)">+</button>
+          </div>
+        `;
+        wrap.appendChild(row);
+      });
+    }
+
+    function adjustCustomString(idx, delta) {
+      state.customMidi[idx] = Math.max(28, Math.min(76, state.customMidi[idx] + delta));
+      state.tunedStrings[idx] = false;
+      renderAllUI();
+      selectAndPlayString(idx);
+    }
+
+    function renderPegButtons() {
+      const leftCol = document.getElementById('leftPegsColumn');
+      const rightCol = document.getElementById('rightPegsColumn');
+      leftCol.innerHTML = '';
+      rightCol.innerHTML = '';
+
+      const midiArr = getActiveMidiArray();
+
+      [2, 1, 0].forEach(idx => {
+        leftCol.appendChild(createPegButton(idx, midiArr[idx], 'left'));
+      });
+
+      [3, 4, 5].forEach(idx => {
+        rightCol.appendChild(createPegButton(idx, midiArr[idx], 'right'));
+      });
+    }
+
+    function createPegButton(idx, midi, side) {
+      const stringNum = 6 - idx;
+      const freq = midiToFreq(midi);
+      const both = getNoteBothNames(midi);
+      const primaryNote = state.notation === 'ru' ? both.ru : both.en;
+      const secondaryNote = state.notation === 'ru' ? both.en : both.ruNameOnly;
+
+      const btn = document.createElement('button');
+      btn.id = `peg-btn-${idx}`;
+      btn.className = 'peg-button' +
+        (state.selectedStringIndex === idx ? ' selected' : '') +
+        (state.tunedStrings[idx] ? ' tuned' : '');
+      btn.onclick = () => selectAndPlayString(idx);
+
+      if (side === 'left') {
+        btn.innerHTML = `
+          <div class="peg-string-num">${state.tunedStrings[idx] ? '✓' : stringNum}</div>
+          <div class="peg-note-info">
+            <span class="peg-note-title">${primaryNote}</span>
+            <span class="peg-note-sub">${secondaryNote} · ${freq.toFixed(1)} Гц</span>
+          </div>
+        `;
+      } else {
+        btn.innerHTML = `
+          <div class="peg-note-info">
+            <span class="peg-note-title">${primaryNote}</span>
+            <span class="peg-note-sub">${secondaryNote} · ${freq.toFixed(1)} Гц</span>
+          </div>
+          <div class="peg-string-num">${state.tunedStrings[idx] ? '✓' : stringNum}</div>
+        `;
+      }
+      return btn;
+    }
+
+    function renderHeadstockSVG() {
+      const svg = document.getElementById('headstockSvg');
+      const type = state.guitarType;
+
+      const postCoords = [
+        { x: 68, y: 228 },
+        { x: 65, y: 150 },
+        { x: 62, y: 72 },
+        { x: 198, y: 72 },
+        { x: 195, y: 150 },
+        { x: 192, y: 228 }
+      ];
+
+      const nutY = 288;
+      const nutXs = [92, 107, 122, 138, 153, 168];
+
+      let bodyFill = '#3b2314';
+      let bodyStroke = '#f59e0b';
+      let hardwareColor = '#d1d5db';
+      let headPath = '';
+
+      if (type === 'acoustic') {
+        bodyFill = 'url(#acousticWood)';
+        bodyStroke = '#d97706';
+        hardwareColor = '#e5e7eb';
+        headPath = `
+          <path d="M 85 288 L 44 252 L 38 42 Q 130 20 222 42 L 216 252 L 175 288 Z"
+                fill="${bodyFill}" stroke="${bodyStroke}" stroke-width="2.2" />
+          <path d="M 85 288 L 80 350 L 180 350 L 175 288 Z"
+                fill="#27170e" stroke="#78350f" stroke-width="1.5" />
+          <text x="130" y="52" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="800" letter-spacing="2">ACOUSTIC</text>
+        `;
+      } else if (type === 'classical') {
+        bodyFill = 'url(#classicalWood)';
+        bodyStroke = '#ec4899';
+        hardwareColor = '#fbbf24';
+        headPath = `
+          <path d="M 85 288 L 45 254 L 45 48 Q 85 24 130 40 Q 175 24 215 48 L 215 254 L 175 288 Z"
+                fill="${bodyFill}" stroke="${bodyStroke}" stroke-width="2.2" />
+          <rect x="56" y="58" width="24" height="185" rx="10" fill="#090c12" stroke="#9d174d" stroke-width="1.5" />
+          <rect x="180" y="58" width="24" height="185" rx="10" fill="#090c12" stroke="#9d174d" stroke-width="1.5" />
+          <path d="M 85 288 L 80 350 L 180 350 L 175 288 Z"
+                fill="#2d1610" stroke="#831843" stroke-width="1.5" />
+          <text x="130" y="54" text-anchor="middle" fill="#f472b6" font-size="9.5" font-weight="800" letter-spacing="1.5">CLASSICAL</text>
+        `;
+      } else {
+        bodyFill = 'url(#electricBody)';
+        bodyStroke = '#06b6d4';
+        hardwareColor = '#38bdf8';
+        headPath = `
+          <path d="M 85 288 L 40 246 L 48 45 L 130 16 L 212 45 L 220 246 L 175 288 Z"
+                fill="${bodyFill}" stroke="${bodyStroke}" stroke-width="2.2" />
+          <polygon points="130,220 116,266 144,266" fill="#0f172a" stroke="#06b6d4" stroke-width="1.2" />
+          <path d="M 85 288 L 80 350 L 180 350 L 175 288 Z"
+                fill="#111827" stroke="#1e293b" stroke-width="1.5" />
+          <text x="130" y="44" text-anchor="middle" fill="#22d3ee" font-size="10" font-weight="800" letter-spacing="2">ELECTRIC</text>
+        `;
+      }
+
+      let pegsHtml = '';
+      postCoords.forEach((pt, idx) => {
+        const isLeft = idx < 3;
+        const isSelected = state.selectedStringIndex === idx;
+        const isTuned = state.tunedStrings[idx];
+        const ringColor = isSelected ? '#10e878' : (isTuned ? '#10e878' : hardwareColor);
+        const armX2 = isLeft ? 12 : 248;
+
+        pegsHtml += `
+          <line id="svg-conn-${idx}" x1="${pt.x}" y1="${pt.y}" x2="${armX2}" y2="${pt.y}"
+                stroke="${isSelected ? '#10e878' : 'rgba(255,255,255,0.18)'}"
+                stroke-width="${isSelected ? '2.5' : '1.2'}"
+                stroke-dasharray="${isSelected ? 'none' : '3,3'}" />
+          <circle id="svg-post-outer-${idx}" cx="${pt.x}" cy="${pt.y}" r="9" fill="#0b0e14" stroke="${ringColor}" stroke-width="2.5"
+                  style="cursor:pointer" onclick="selectAndPlayString(${idx})" />
+          <circle id="svg-post-inner-${idx}" cx="${pt.x}" cy="${pt.y}" r="3.5" fill="${ringColor}"
+                  style="cursor:pointer" onclick="selectAndPlayString(${idx})" />
+        `;
+      });
+
+      const nutHtml = `
+        <rect x="83" y="${nutY - 4}" width="94" height="9" rx="3"
+              fill="${type === 'electric' ? '#334155' : '#fef3c7'}"
+              stroke="#0f172a" stroke-width="1.2" />
+      `;
+
+      let stringsHtml = '';
+      for (let idx = 0; idx < 6; idx++) {
+        const pt = postCoords[idx];
+        const nx = nutXs[idx];
+        const thickness = 3.1 - idx * 0.36;
+        const isSelected = state.selectedStringIndex === idx;
+        const isTuned = state.tunedStrings[idx];
+
+        let baseColor = '#d1d5db';
+        if (type === 'acoustic') {
+          baseColor = idx < 4 ? '#f59e0b' : '#e5e7eb';
+        } else if (type === 'classical') {
+          baseColor = idx < 3 ? '#cbd5e1' : 'rgba(244, 114, 182, 0.85)';
+        } else {
+          baseColor = '#38bdf8';
+        }
+
+        const activeColor = isSelected ? '#10e878' : (isTuned ? '#34d399' : baseColor);
+
+        stringsHtml += `
+          <g style="cursor:pointer" onclick="selectAndPlayString(${idx})">
+            <line id="svg-str-upper-${idx}" x1="${nx}" y1="${nutY}" x2="${pt.x}" y2="${pt.y}"
+                  stroke="${activeColor}" stroke-width="${thickness}" stroke-linecap="round" />
+            <path id="svg-str-lower-${idx}" d="M ${nx} ${nutY} Q ${nx} 320 ${nx} 350"
+                  fill="none" stroke="${activeColor}" stroke-width="${thickness + 0.3}" stroke-linecap="round" />
+          </g>
+        `;
+      }
+
+      svg.innerHTML = `
+        <defs>
+          <linearGradient id="acousticWood" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#451a03" />
+            <stop offset="50%" stop-color="#78350f" />
+            <stop offset="100%" stop-color="#291002" />
+          </linearGradient>
+          <linearGradient id="classicalWood" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#3b0724" />
+            <stop offset="50%" stop-color="#5c1933" />
+            <stop offset="100%" stop-color="#240515" />
+          </linearGradient>
+          <linearGradient id="electricBody" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#0f172a" />
+            <stop offset="50%" stop-color="#1e293b" />
+            <stop offset="100%" stop-color="#090d16" />
+          </linearGradient>
+        </defs>
+        ${headPath}
+        ${nutHtml}
+        ${pegsHtml}
+        ${stringsHtml}
+      `;
+    }
+
+    function updateTargetReadout() {
+      const midiArr = getActiveMidiArray();
+      const idx = state.selectedStringIndex;
+      const midi = midiArr[idx];
+      const freq = midiToFreq(midi);
+      const both = getNoteBothNames(midi);
+      const stringNum = 6 - idx;
+
+      document.getElementById('targetStringBadge').textContent = `🎯 ЦЕЛЬ: ${stringNum} СТРУНА`;
+      document.getElementById('targetNoteMain').textContent = state.notation === 'ru' ? both.ru : both.en;
+      document.getElementById('targetNoteRus').textContent = state.notation === 'ru' ? both.en : both.ruNameOnly;
+      document.getElementById('targetFreqText').textContent = `Эталон: ${freq.toFixed(2)} Гц`;
+    }
+
+    function updateCurrentDetectedReadout(showActive, forceImmediate = false) {
+      const now = performance.now();
+      if (!forceImmediate && now - state.lastTextRenderTime < 120) {
+        return;
+      }
+      state.lastTextRenderTime = now;
+
+      const currentBox = document.getElementById('currentPitchBox');
+      const detMain = document.getElementById('detectedNoteMain');
+      const detRus = document.getElementById('detectedNoteRus');
+      const detFreq = document.getElementById('detectedFreqText');
+      const deltaBig = document.getElementById('deltaCentsBig');
+      const deltaDir = document.getElementById('deltaDirectionText');
+      const statusPill = document.getElementById('tuningStatusPill');
+      const diagText = document.getElementById('filterDiagnosticText');
+
+      if (state.isListening) {
+        if (state.hasLiveSignal) {
+          diagText.style.color = 'var(--accent-green)';
+          diagText.textContent = `✓ Захвачена струна (Обертоны +${Math.round(state.harmonicScore)} дБ)`;
+        } else {
+          diagText.style.color = 'var(--text-muted)';
+          diagText.textContent = state.lastRejectionReason || 'Слушаю только струны гитары...';
+        }
+      } else if (state.simulatorActive) {
+        diagText.style.color = 'var(--accent-blue)';
+        diagText.textContent = 'Активен тестовый симулятор струны';
+      } else {
+        diagText.style.color = 'var(--text-muted)';
+        diagText.textContent = 'Отсекает разговор, вентилятор и стуки';
+      }
+
+      if (!showActive || state.smoothedFreq <= 0) {
+        currentBox.className = 'pitch-box';
+        detMain.textContent = '—';
+        detRus.textContent = state.isListening ? 'Жду струну' : 'Выкл.';
+        detFreq.textContent = 'Частота: — Гц';
+        deltaBig.textContent = '0 ¢';
+        deltaBig.style.color = 'var(--text-dim)';
+        deltaDir.textContent = state.isListening ? 'Дёрните струну' : 'Микрофон выкл.';
+        deltaDir.style.color = 'var(--text-muted)';
+        statusPill.className = 'status-pill';
+        statusPill.textContent = state.isListening ? 'Шум отсечён — ударьте по струне гитары' : 'Включите микрофон и ударьте по струне';
+        return;
+      }
+
+      const exactMidi = freqToExactMidi(state.smoothedFreq);
+      const nearestChromMidi = Math.round(exactMidi);
+      const playedBoth = getNoteBothNames(nearestChromMidi);
+
+      detMain.textContent = state.notation === 'ru' ? playedBoth.ru : playedBoth.en;
+      detRus.textContent = state.notation === 'ru' ? playedBoth.en : playedBoth.ruNameOnly;
+      detFreq.textContent = `Сейчас: ${state.smoothedFreq.toFixed(1)} Гц`;
+
+      const cents = state.smoothedRawCents;
+      const absCents = Math.abs(cents);
+      const sign = cents > 0.4 ? '+' : '';
+
+      if (absCents >= 100) {
+        const semitones = (cents / 100).toFixed(1);
+        deltaBig.textContent = `${sign}${semitones} пт`;
+      } else {
+        deltaBig.textContent = `${sign}${Math.round(cents)} ¢`;
+      }
+
+      const strNum = 6 - state.selectedStringIndex;
+      if (absCents <= 3.5) {
+        currentBox.className = 'pitch-box current-intune';
+        deltaBig.style.color = 'var(--accent-green)';
+        deltaDir.style.color = 'var(--accent-green)';
+        deltaDir.textContent = '✓ ТОЧНО В СТРОЕ';
+        statusPill.className = 'status-pill in-tune';
+        statusPill.textContent = `✓ ${strNum} струна идеально настроена!`;
+      } else if (cents < -3.5) {
+        currentBox.className = 'pitch-box current-active';
+        const col = absCents > 25 ? 'var(--accent-red)' : 'var(--accent-amber)';
+        deltaBig.style.color = col;
+        deltaDir.style.color = col;
+        deltaDir.textContent = '⬆ ПОДТЯНИТЕ';
+        statusPill.className = absCents > 25 ? 'status-pill way-off' : 'status-pill flat';
+        statusPill.textContent = `⬆ Низит — подтяните ${strNum} струну`;
+      } else {
+        currentBox.className = 'pitch-box current-active';
+        const col = absCents > 25 ? 'var(--accent-red)' : 'var(--accent-amber)';
+        deltaBig.style.color = col;
+        deltaDir.style.color = col;
+        deltaDir.textContent = '⬇ ОСЛАБЬТЕ';
+        statusPill.className = absCents > 25 ? 'status-pill way-off' : 'status-pill sharp';
+        statusPill.textContent = `⬇ Высит — ослабьте ${strNum} струну`;
+      }
+    }
+
+    /*************************************************************************
+     * 7. USER INTERACTIONS & SETTINGS HANDLERS
+     *************************************************************************/
+    function selectGuitarType(type) {
+      state.guitarType = type;
+      renderAllUI();
+      playStringTone(state.selectedStringIndex);
+    }
+
+    function selectTuning(tuningKey) {
+      state.tuningKey = tuningKey;
+      state.tunedStrings = [false, false, false, false, false, false];
+      state.recentFreqBuffer = [];
+      state.stabilityWindow = [];
+      renderAllUI();
+      playStringTone(state.selectedStringIndex);
+    }
+
+    function selectAndPlayString(idx) {
+      state.selectedStringIndex = idx;
+      state.candidateStringIdx = idx;
+      state.candidateStringCount = 0;
+      state.inTuneHoldFrames = 0;
+
+      if (state.smoothedFreq > 0) {
+        const targetMidi = getActiveMidiArray()[idx];
+        const targetFreq = midiToFreq(targetMidi);
+        state.smoothedRawCents = centsBetweenFreqs(state.smoothedFreq, targetFreq);
+        state.smoothedCents = Math.max(-50, Math.min(50, state.smoothedRawCents));
+      }
+
+      syncActiveStringClasses();
+      updateCurrentDetectedReadout(state.hasLiveSignal, true);
+      playStringTone(idx);
+    }
+
+    function toggleAutoMode() {
+      state.autoMode = !state.autoMode;
+      document.getElementById('autoSwitch').classList.toggle('on', state.autoMode);
+      document.getElementById('autoModeLabel').classList.toggle('active', state.autoMode);
+      document.getElementById('manualModeLabel').classList.toggle('active', !state.autoMode);
+    }
+
+    function setGuitarFilterMode(mode) {
+      state.guitarFilterMode = mode;
+      state.stabilityWindow = [];
+      document.querySelectorAll('#guitarFilterSelector .toggle-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === mode);
+      });
+    }
+
+    function updateTranspose(val) {
+      state.transpose = parseInt(val, 10);
+      const lbl = document.getElementById('transposeLabel');
+      if (state.transpose === 0) {
+        lbl.textContent = '0 пт (Без капо)';
+      } else if (state.transpose > 0) {
+        lbl.textContent = `+${state.transpose} пт (Капо ${state.transpose} лад)`;
+      } else {
+        lbl.textContent = `${state.transpose} пт`;
+      }
+      state.tunedStrings = [false, false, false, false, false, false];
+      renderAllUI();
+    }
+
+    function updateA4(val) {
+      state.a4 = parseInt(val, 10);
+      document.getElementById('a4Slider').value = state.a4;
+      document.getElementById('a4Label').textContent = `${state.a4} Гц`;
+      renderAllUI();
+    }
+
+    function setNotation(lang) {
+      state.notation = lang;
+      document.getElementById('notEngBtn').classList.toggle('active', lang === 'en');
+      document.getElementById('notRusBtn').classList.toggle('active', lang === 'ru');
+      renderAllUI();
+      updateCurrentDetectedReadout(state.hasLiveSignal, true);
+    }
+
+    function setTimbre(timbre) {
+      state.timbre = timbre;
+      document.querySelectorAll('#timbreSelector .toggle-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.timbre === timbre);
+      });
+      playStringTone(state.selectedStringIndex);
+    }
+
+    function updateVolume(val) {
+      state.volume = parseInt(val, 10) / 100;
+      document.getElementById('volLabel').textContent = `${val}%`;
+    }
+
+    function updateSensitivity(val) {
+      state.sensitivityPercent = parseInt(val, 10);
+      const num = state.sensitivityPercent;
+      const txt = num >= 75 ? 'Высокая' : (num >= 50 ? 'Без шума' : 'Грубая');
+      document.getElementById('sensLabel').textContent = `${num}% (${txt})`;
+      if (state.preampNode) {
+        state.preampNode.gain.value = 0.8 + (num / 100) * 2.2;
+      }
+    }
+
+    function toggleLoopTone() {
+      state.loopTone = !state.loopTone;
+      const btn = document.getElementById('loopToneBtn');
+      btn.classList.toggle('active', state.loopTone);
+      if (state.loopTone) {
+        playStringTone(state.selectedStringIndex);
+        state.loopTimer = setInterval(() => {
+          if (state.loopTone) playStringTone(state.selectedStringIndex);
+        }, 2600);
+      } else if (state.loopTimer) {
+        clearInterval(state.loopTimer);
+        state.loopTimer = null;
+      }
+    }
+
+    function resetTunedMarks() {
+      state.tunedStrings = [false, false, false, false, false, false];
+      syncActiveStringClasses();
+    }
+
+    function toggleSimulator(forceState) {
+      state.simulatorActive = typeof forceState === 'boolean' ? forceState : !state.simulatorActive;
+      const btn = document.getElementById('simToggleBtn');
+      const wrap = document.getElementById('simControlsWrap');
+      btn.classList.toggle('active', state.simulatorActive);
+      btn.innerHTML = state.simulatorActive
+        ? '<span>🟢</span> Симулятор включён'
+        : '<span>🧪</span> Включить симулятор струны';
+      wrap.style.display = state.simulatorActive ? 'flex' : 'none';
+      if (!state.simulatorActive) {
+        state.hasLiveSignal = false;
+        state.lastValidPitchTime = 0;
+        updateCurrentDetectedReadout(false, true);
+      }
+    }
+
+    function updateSimulatorCents(val) {
+      state.simCents = parseFloat(val);
+      document.getElementById('simCentsSlider').value = state.simCents;
+      const sign = state.simCents > 0 ? '+' : '';
+      document.getElementById('simCentsLabel').textContent = `${sign}${state.simCents.toFixed(0)} ¢`;
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+      if (e.key >= '1' && e.key <= '6') {
+        const stringNum = parseInt(e.key, 10);
+        selectAndPlayString(6 - stringNum);
+      } else if (e.code === 'Space') {
+        e.preventDefault();
+        strumAllStrings();
+      }
+    });
+
+    /*************************************************************************
+     * 8. REAL-TIME ANIMATION LOOP & STRICT MECHANICAL STABILITY GATE
+     *************************************************************************/
+    const tunerCanvas = document.getElementById('tunerCanvas');
+    const tunerCtx = tunerCanvas.getContext('2d');
+    const specCanvas = document.getElementById('spectrumCanvas');
+    const specCtx = specCanvas.getContext('2d');
+
+    function findClosestStringWithBias(freq) {
+      const midiArr = getActiveMidiArray();
+      let bestIdx = state.selectedStringIndex;
+      let minScore = Infinity;
+
+      midiArr.forEach((midi, idx) => {
+        const targetF = midiToFreq(midi);
+        let absCents = Math.abs(centsBetweenFreqs(freq, targetF));
+        if (idx === state.selectedStringIndex) {
+          absCents -= 45;
+        }
+        if (absCents < minScore) {
+          minScore = absCents;
+          bestIdx = idx;
+        }
+      });
+      return bestIdx;
+    }
+
+    /**
+     * Stage D: Pitch Stability Gate
+     * Latching onto a new string requires 3 consecutive frames (~50 ms) within 15 cents.
+     * Fast enough to react instantly to a plucked string, while filtering out rapid speech glides.
+     */
+    function checkStringFrequencyStability(newFreq) {
+      const isStrict = state.guitarFilterMode === 'strict';
+      const requiredFrames = state.hasLiveSignal ? 2 : (isStrict ? 3 : 2);
+      const maxTotalSpreadCents = state.hasLiveSignal ? 35 : (isStrict ? 15 : 22);
+      const maxFrameStepCents = state.hasLiveSignal ? 25 : (isStrict ? 12 : 18);
+
+      // Check step from immediately preceding frame
+      if (state.stabilityWindow.length > 0) {
+        const prevF = state.stabilityWindow[state.stabilityWindow.length - 1];
+        const stepCents = Math.abs(centsBetweenFreqs(newFreq, prevF));
+        if (stepCents > maxFrameStepCents) {
+          state.stabilityWindow = [newFreq];
+          state.lastRejectionReason = 'Плавающий тон (разговор)';
+          return false;
+        }
+      }
+
+      state.stabilityWindow.push(newFreq);
+      if (state.stabilityWindow.length > 5) {
+        state.stabilityWindow.shift();
+      }
+
+      if (state.stabilityWindow.length < requiredFrames) {
+        state.lastRejectionReason = 'Захват струны...';
+        return false;
+      }
+
+      const recentSlice = state.stabilityWindow.slice(-requiredFrames);
+      const minF = Math.min(...recentSlice);
+      const maxF = Math.max(...recentSlice);
+      const spreadCents = Math.abs(centsBetweenFreqs(maxF, minF));
+
+      if (spreadCents > maxTotalSpreadCents) {
+        state.stabilityWindow.shift();
+        state.lastRejectionReason = 'Нестабильная частота';
+        return false;
+      }
+
+      return true;
+    }
+
+    function processAudioFrame() {
+      const nowMs = performance.now();
+      const midiArr = getActiveMidiArray();
+
+      if (state.simulatorActive) {
+        const targetFreq = midiToFreq(midiArr[state.selectedStringIndex]);
+        const simFreq = targetFreq * Math.pow(2, state.simCents / 1200);
+        state.signalRms = 0.06;
+        state.confidence = 0.98;
+        state.harmonicScore = 24;
+        state.hasLiveSignal = true;
+        state.lastValidPitchTime = nowMs;
+        handleValidatedPitch(simFreq);
+      } else if (state.isListening && state.yinAnalyser && state.fftAnalyser) {
+        state.yinAnalyser.getFloatTimeDomainData(state.timeDomainBuf);
+        state.fftAnalyser.getFloatFrequencyData(state.fftFreqBuf);
+
+        const result = detectGuitarPitch(
+          state.timeDomainBuf,
+          state.fftFreqBuf,
+          state.audioCtx.sampleRate,
+          state.fftAnalyser.fftSize
+        );
+        state.confidence = result.confidence;
+
+        if (result.freq > 0) {
+          state.missedFramesCount = 0;
+          if (checkStringFrequencyStability(result.freq)) {
+            state.recentFreqBuffer.push(result.freq);
+            if (state.recentFreqBuffer.length > 5) {
+              state.recentFreqBuffer.shift();
+            }
+
+            const medianFreq = getMedian(state.recentFreqBuffer);
+            state.hasLiveSignal = true;
+            state.lastValidPitchTime = nowMs;
+            handleValidatedPitch(medianFreq);
+          }
+        } else {
+          // Allow small dropouts during string decay nodes
+          state.missedFramesCount++;
+          if (state.missedFramesCount >= 4) {
+            state.stabilityWindow = [];
+          }
+          if (nowMs - state.lastValidPitchTime > LIVE_DEBOUNCE_MS) {
+            state.hasLiveSignal = false;
+            state.inTuneHoldFrames = 0;
+          }
+        }
+      } else {
+        state.hasLiveSignal = false;
+      }
+
+      const showActive = state.hasLiveSignal || ((nowMs - state.lastValidPitchTime < HOLD_DURATION_MS) && state.smoothedFreq > 0 && state.lastValidPitchTime > 0);
+      const isHolding = !state.hasLiveSignal && showActive;
+      updateCurrentDetectedReadout(showActive);
+
+      for (let i = 0; i < 6; i++) {
+        if (state.stringVibration[i] > 0.01) {
+          const el = document.getElementById(`svg-str-lower-${i}`);
+          if (el) {
+            const nutXs = [92, 107, 122, 138, 153, 168];
+            const nx = nutXs[i];
+            const amp = Math.sin(nowMs * 0.08) * 3.0 * state.stringVibration[i];
+            el.setAttribute('d', `M ${nx} 288 Q ${nx + amp} 320 ${nx} 350`);
+          }
+          state.stringVibration[i] *= 0.92;
+        }
+      }
+
+      drawGuitarTunaMeter(showActive, isHolding);
+      drawSpectrumWave();
+      requestAnimationFrame(processAudioFrame);
+    }
+
+    function handleValidatedPitch(freq) {
+      const midiArr = getActiveMidiArray();
+
+      if (state.smoothedFreq === 0 || Math.abs(centsBetweenFreqs(freq, state.smoothedFreq)) > 200) {
+        state.smoothedFreq = freq;
+      } else {
+        state.smoothedFreq = state.smoothedFreq * 0.85 + freq * 0.15;
+      }
+
+      if (state.autoMode) {
+        const closestIdx = findClosestStringWithBias(state.smoothedFreq);
+        if (closestIdx !== state.selectedStringIndex) {
+          if (state.candidateStringIdx === closestIdx) {
+            state.candidateStringCount++;
+            if (state.candidateStringCount >= 5) {
+              state.selectedStringIndex = closestIdx;
+              state.candidateStringCount = 0;
+              state.inTuneHoldFrames = 0;
+              state.pitchHistory = [];
+              syncActiveStringClasses();
+            }
+          } else {
+            state.candidateStringIdx = closestIdx;
+            state.candidateStringCount = 1;
+          }
+        } else {
+          state.candidateStringCount = 0;
+        }
+      }
+
+      const targetMidi = midiArr[state.selectedStringIndex];
+      const targetFreq = midiToFreq(targetMidi);
+      const rawCents = centsBetweenFreqs(state.smoothedFreq, targetFreq);
+
+      state.smoothedRawCents = state.smoothedRawCents * 0.84 + rawCents * 0.16;
+      const targetClamped = Math.max(-50, Math.min(50, rawCents));
+      state.smoothedCents = state.smoothedCents * 0.84 + targetClamped * 0.16;
+
+      state.pitchHistory.push(state.smoothedCents);
+      if (state.pitchHistory.length > 65) {
+        state.pitchHistory.shift();
+      }
+
+      if (Math.abs(state.smoothedRawCents) <= 3.5) {
+        state.inTuneHoldFrames++;
+        if (state.inTuneHoldFrames === 14 && !state.tunedStrings[state.selectedStringIndex]) {
+          state.tunedStrings[state.selectedStringIndex] = true;
+          playInTuneChime();
+          syncActiveStringClasses();
+        }
+      } else {
+        state.inTuneHoldFrames = 0;
+      }
+    }
+
+    function drawGuitarTunaMeter(showActiveReading, isHolding) {
+      const w = tunerCanvas.width;
+      const h = tunerCanvas.height;
+      tunerCtx.clearRect(0, 0, w, h);
+
+      const centerX = w / 2;
+      const scaleHalfWidth = w * 0.43;
+
+      const inTuneZonePx = (3.5 / 50) * scaleHalfWidth;
+      const gradZone = tunerCtx.createLinearGradient(0, 0, 0, h);
+      gradZone.addColorStop(0, 'rgba(16, 232, 120, 0.24)');
+      gradZone.addColorStop(1, 'rgba(16, 232, 120, 0.02)');
+      tunerCtx.fillStyle = gradZone;
+      tunerCtx.fillRect(centerX - inTuneZonePx, 8, inTuneZonePx * 2, h - 16);
+
+      tunerCtx.strokeStyle = 'rgba(16, 232, 120, 0.8)';
+      tunerCtx.lineWidth = 2;
+      tunerCtx.beginPath();
+      tunerCtx.moveTo(centerX, 8);
+      tunerCtx.lineTo(centerX, h - 8);
+      tunerCtx.stroke();
+
+      tunerCtx.font = '700 11px JetBrains Mono, monospace';
+      tunerCtx.textAlign = 'center';
+
+      for (let c = -50; c <= 50; c += 2) {
+        const x = centerX + (c / 50) * scaleHalfWidth;
+        const isMajor = c % 10 === 0;
+        const isCenter = c === 0;
+        const tickTop = isMajor ? 28 : 34;
+        const tickBot = isMajor ? 48 : 43;
+
+        tunerCtx.strokeStyle = isCenter
+          ? '#10e878'
+          : (isMajor ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.16)');
+        tunerCtx.lineWidth = isMajor ? 2 : 1;
+        tunerCtx.beginPath();
+        tunerCtx.moveTo(x, tickTop);
+        tunerCtx.lineTo(x, tickBot);
+        tunerCtx.stroke();
+
+        if (isMajor) {
+          tunerCtx.fillStyle = isCenter ? '#10e878' : '#94a3b8';
+          const label = c > 0 ? `+${c}` : `${c}`;
+          tunerCtx.fillText(label, x, 21);
+        }
+      }
+
+      if (state.pitchHistory.length > 1 && showActiveReading) {
+        tunerCtx.beginPath();
+        for (let i = 0; i < state.pitchHistory.length; i++) {
+          const c = state.pitchHistory[i];
+          const px = centerX + (c / 50) * scaleHalfWidth;
+          const py = h - 10 - ((state.pitchHistory.length - 1 - i) * 1.4);
+          if (i === 0) tunerCtx.moveTo(px, py);
+          else tunerCtx.lineTo(px, py);
+        }
+        tunerCtx.strokeStyle = isHolding ? 'rgba(16, 232, 120, 0.18)' : 'rgba(16, 232, 120, 0.38)';
+        tunerCtx.lineWidth = 3;
+        tunerCtx.stroke();
+      }
+
+      const clampedCents = showActiveReading ? state.smoothedCents : 0;
+      const bubbleX = centerX + (clampedCents / 50) * scaleHalfWidth;
+      const bubbleY = 100;
+      const absRaw = Math.abs(state.smoothedRawCents);
+
+      let bubbleColor = '#64748b';
+      if (showActiveReading) {
+        if (absRaw <= 3.5) bubbleColor = '#10e878';
+        else if (absRaw <= 22) bubbleColor = '#ffb020';
+        else bubbleColor = '#ff4757';
+      }
+
+      if (showActiveReading) {
+        const radGrad = tunerCtx.createRadialGradient(bubbleX, bubbleY, 4, bubbleX, bubbleY, 40);
+        radGrad.addColorStop(0, bubbleColor + (isHolding ? '33' : '66'));
+        radGrad.addColorStop(1, 'transparent');
+        tunerCtx.fillStyle = radGrad;
+        tunerCtx.beginPath();
+        tunerCtx.arc(bubbleX, bubbleY, 40, 0, Math.PI * 2);
+        tunerCtx.fill();
+      }
+
+      tunerCtx.fillStyle = bubbleColor;
+      tunerCtx.beginPath();
+      tunerCtx.moveTo(bubbleX, 52);
+      tunerCtx.lineTo(bubbleX - 8, 66);
+      tunerCtx.lineTo(bubbleX + 8, 66);
+      tunerCtx.closePath();
+      tunerCtx.fill();
+
+      tunerCtx.fillStyle = '#0e131f';
+      tunerCtx.strokeStyle = bubbleColor;
+      tunerCtx.lineWidth = 3.5;
+      tunerCtx.beginPath();
+      tunerCtx.arc(bubbleX, bubbleY, 27, 0, Math.PI * 2);
+      tunerCtx.fill();
+      tunerCtx.stroke();
+
+      tunerCtx.fillStyle = showActiveReading ? '#ffffff' : '#64748b';
+      tunerCtx.font = '800 13.5px JetBrains Mono, monospace';
+      tunerCtx.textAlign = 'center';
+      tunerCtx.textBaseline = 'middle';
+      if (showActiveReading) {
+        const disp = Math.max(-99, Math.min(99, Math.round(state.smoothedRawCents)));
+        const sign = disp > 0 ? '+' : '';
+        tunerCtx.fillText(`${sign}${disp}¢`, bubbleX, bubbleY);
+      } else {
+        tunerCtx.fillText('0¢', bubbleX, bubbleY);
+      }
+      tunerCtx.textBaseline = 'alphabetic';
+    }
+
+    /**
+     * Draw oscilloscope ONLY when a real guitar string is verified (flat line on speech/fan noise!)
+     */
+    function drawSpectrumWave() {
+      const w = specCanvas.width;
+      const h = specCanvas.height;
+      specCtx.clearRect(0, 0, w, h);
+
+      specCtx.strokeStyle = 'rgba(255,255,255,0.08)';
+      specCtx.lineWidth = 1;
+      specCtx.beginPath();
+      specCtx.moveTo(0, h / 2);
+      specCtx.lineTo(w, h / 2);
+      specCtx.stroke();
+
+      const rmsEl = document.getElementById('signalRmsText');
+      const confEl = document.getElementById('pitchConfidenceText');
+      const levelFill = document.getElementById('levelBarFill');
+
+      if (state.isListening && state.timeDomainBuf) {
+        if (state.hasLiveSignal) {
+          const buf = state.timeDomainBuf;
+          const step = Math.floor(buf.length / w);
+          specCtx.strokeStyle = '#10e878';
+          specCtx.lineWidth = 2.2;
+          specCtx.beginPath();
+          for (let x = 0; x < w; x++) {
+            const sample = buf[x * step] || 0;
+            const y = h / 2 + sample * (h * 1.6);
+            if (x === 0) specCtx.moveTo(x, y);
+            else specCtx.lineTo(x, y);
+          }
+          specCtx.stroke();
+
+          const levelPct = Math.min(100, Math.round(Math.sqrt(state.signalRms) * 240));
+          levelFill.className = 'level-bar-fill guitar-verified';
+          levelFill.style.width = `${levelPct}%`;
+          rmsEl.style.color = 'var(--accent-green)';
+          rmsEl.textContent = 'Струна гитары ✓';
+          confEl.textContent = `Обертоны: +${Math.round(state.harmonicScore)} дБ`;
+        } else {
+          // Do NOT animate wave on fan noise or speech — keep it flat so non-guitar noise is visually ignored too!
+          levelFill.className = 'level-bar-fill';
+          levelFill.style.width = '0%';
+          rmsEl.style.color = 'var(--text-muted)';
+          rmsEl.textContent = 'Фон / речь подавлены';
+          confEl.textContent = 'Обертоны: —';
+        }
+      } else if (state.simulatorActive) {
+        const t = performance.now() * 0.015;
+        specCtx.strokeStyle = '#38bdf8';
+        specCtx.lineWidth = 2;
+        specCtx.beginPath();
+        for (let x = 0; x < w; x++) {
+          const y = h / 2 + Math.sin(x * 0.14 + t) * 20 * Math.sin(x * 0.02);
+          if (x === 0) specCtx.moveTo(x, y);
+          else specCtx.lineTo(x, y);
+        }
+        specCtx.stroke();
+        levelFill.className = 'level-bar-fill guitar-verified';
+        levelFill.style.width = '65%';
+        rmsEl.style.color = 'var(--accent-blue)';
+        rmsEl.textContent = 'Симуляция';
+        confEl.textContent = 'Обертоны: +24 дБ';
+      } else {
+        levelFill.className = 'level-bar-fill';
+        levelFill.style.width = '0%';
+        rmsEl.style.color = 'var(--text-muted)';
+        rmsEl.textContent = 'Микрофон выкл.';
+        confEl.textContent = 'Обертоны: —';
+      }
+    }
+
+    renderAllUI();
+    populateMicDevices();
+    requestAnimationFrame(processAudioFrame);
+  </script>
+</body>
+</html>
